@@ -1196,7 +1196,6 @@ const Teachers: React.FC = () => {
         </div>
       </div>
     </div>
-  );
 };
 
 export default Teachers;
