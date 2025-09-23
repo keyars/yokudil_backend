@@ -375,6 +375,20 @@ const Dashboard: React.FC = () => {
                       <p className="text-sm font-medium text-gray-900">{interaction.member}</p>
                       <span className="text-xs text-gray-500">{interaction.date}</span>
                     </div>
+                    <p className="text-sm text-gray-600 mt-1">{interaction.interaction}</p>
+                    <p className="text-xs text-gray-500">{interaction.class}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* My Contribution Summary */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">My Contribution Summary</h2>
+              <Target size={20} className="text-gray-400" />
+            </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Total Hours</span>
