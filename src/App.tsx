@@ -25,7 +25,6 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route
               path="/dashboard"
               element={
@@ -136,6 +135,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
       </Router>
