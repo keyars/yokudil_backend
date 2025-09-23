@@ -449,10 +449,6 @@ const Classes: React.FC = () => {
                     <span>{classItem.time} ({classItem.duration} min)</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    {getTypeIcon(classItem.type)}
-                    <span>{classItem.type}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <Users size={16} />
                     <span>{classItem.enrolled}/{classItem.capacity} enrolled</span>
                   </div>
@@ -586,20 +582,23 @@ const Classes: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Class Type *
+                    Capacity *
                   </label>
                   <input
-                    type="text"
-                    value="Online"
-                    readOnly
+                    type="number"
+                    value={newClass.capacity}
+                    onChange={(e) => setNewClass({...newClass, capacity: parseInt(e.target.value)})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    min="1"
+                    max="50"
+                    required
                   />
                 </div>
               </div>
 
               {/* Zoom Integration */}
               <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Online Meeting Setup</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Zoom Meeting Setup</h3>
                 
                 {!newClass.zoomConnected ? (
                   <div className="bg-gray-50 rounded-lg p-6">
@@ -607,7 +606,7 @@ const Classes: React.FC = () => {
                       <Video size={48} className="mx-auto text-gray-400 mb-4" />
                       <h4 className="text-lg font-medium text-gray-900 mb-2">Connect Zoom Meeting</h4>
                       <p className="text-gray-600 mb-4">
-                        Create a Zoom meeting for this class automatically. This will make the class available online.
+                        Create a Zoom meeting for this class automatically.
                       </p>
                       <button
                         type="button"
@@ -639,7 +638,7 @@ const Classes: React.FC = () => {
                         <div>
                           <h4 className="text-lg font-medium text-gray-900">Zoom Meeting Connected</h4>
                           <p className="text-sm text-gray-600 mt-1">
-                            This class will be available online via Zoom
+                            Zoom meeting is ready for this class
                           </p>
                           <div className="mt-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
