@@ -182,10 +182,6 @@ const Teachers: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Teacher & Volunteer Management</h1>
-          <p className="text-gray-600 mt-1">Manage instructors and volunteers</p>
-        </div>
-        <button 
           type="button"
           onClick={handleAddInstructor}
           className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
