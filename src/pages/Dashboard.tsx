@@ -1420,16 +1420,9 @@ const Dashboard: React.FC = () => {
                       <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
                     </div>
-                    <div className={`p-3 rounded-full ${stat.color}`}>
-                      <Icon size={24} className="text-white" />
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-[#F25274]">{classItem.time}</p>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-      {/* Additional sections for non-super-admin roles */}
       {user?.role !== 'super_admin' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Activities for other roles */}
