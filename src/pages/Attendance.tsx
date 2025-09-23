@@ -199,12 +199,10 @@ const Attendance: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              {selectedClassForAttendance.type === 'Online' ? <Video size={20} className="text-blue-500" /> :
-               selectedClassForAttendance.type === 'In-Person' ? <MapPin size={20} className="text-green-500" /> :
-               <Users size={20} className="text-purple-500" />}
+              <Video size={20} className="text-blue-500" />
               <div>
                 <p className="text-sm text-gray-600">Type</p>
-                <p className="font-medium">{selectedClassForAttendance.type}</p>
+                <p className="font-medium">Online</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -557,12 +555,8 @@ const Attendance: React.FC = () => {
                     <h3 className="font-medium text-gray-900">{classItem.title}</h3>
                     <p className="text-sm text-gray-600">{classItem.time} - {classItem.instructor}</p>
                   </div>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    classItem.type === 'Online' ? 'bg-blue-100 text-blue-800' :
-                    classItem.type === 'In-Person' ? 'bg-green-100 text-green-800' :
-                    'bg-purple-100 text-purple-800'
-                  }`}>
-                    {classItem.type}
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${'bg-blue-100 text-blue-800'}`}>
+                    Online
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -605,12 +599,8 @@ const Attendance: React.FC = () => {
                   <p className="text-sm text-gray-600">{classItem.date} at {classItem.time}</p>
                   <p className="text-sm text-gray-500">{classItem.instructor}</p>
                 </div>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  classItem.type === 'Online' ? 'bg-blue-100 text-blue-800' :
-                  classItem.type === 'In-Person' ? 'bg-green-100 text-green-800' :
-                  'bg-purple-100 text-purple-800'
-                }`}>
-                  {classItem.type}
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${'bg-blue-100 text-blue-800'}`}>
+                  Online
                 </span>
               </div>
               <div className="flex items-center justify-between">
