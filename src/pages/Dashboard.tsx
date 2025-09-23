@@ -1420,7 +1420,14 @@ const Dashboard: React.FC = () => {
                       <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                       <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
                     </div>
-                   <span className="text-sm font-medium text-[#F25274]">{classItem.time}</span>
+                    <div className={`p-3 rounded-full ${stat.color}`}>
+                      <Icon size={24} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
       {/* Additional sections for non-super-admin roles */}
       {user?.role !== 'super_admin' && (
@@ -1468,6 +1475,10 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+            </>
+          )}
+        </>
       )}
     </div>
   );
