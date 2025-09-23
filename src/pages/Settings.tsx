@@ -67,7 +67,6 @@ interface SettingsData {
 }
 
 const Settings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'system' | 'security' | 'appearance' | 'integrations'>('profile');
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'system' | 'security' | 'integrations'>('profile');
   const [showApiKeys, setShowApiKeys] = useState<{[key: string]: boolean}>({});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
