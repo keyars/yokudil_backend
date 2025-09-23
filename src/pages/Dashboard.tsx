@@ -134,16 +134,8 @@ const Dashboard: React.FC = () => {
       return [
         { title: 'My Classes', value: 8, icon: Calendar, color: 'bg-[#6CBFC4]' },
         { title: 'Students', value: 45, icon: Users, color: 'bg-[#F25274]' },
-        { title: 'Hours This Month', value: 36, icon: Clock, color: 'bg-[#F3E682]' },
-        { title: 'Avg Rating', value: '4.8', icon: Star, color: 'bg-yellow-500' },
-      ];
-    } else {
-      return [
-        { title: 'Volunteer Hours', value: 24, icon: Clock, color: 'bg-[#F3E682]' },
-        { title: 'Classes Assisted', value: 12, icon: Calendar, color: 'bg-[#6CBFC4]' },
-        { title: 'Members Helped', value: 28, icon: Users, color: 'bg-[#F25274]' },
         { title: 'Feedback Score', value: '4.9', icon: Star, color: 'bg-yellow-500' },
-      ];
+        return <Video size={16} className="text-blue-500" />;
     }
   };
 

@@ -41,7 +41,7 @@ const Classes: React.FC = () => {
     date: '',
     time: '',
     duration: 60,
-    type: 'Online' as 'Online' | 'In-Person' | 'Hybrid',
+    type: 'Online' as 'Online',
     zoomLink: '',
     zoomConnected: false,
     capacity: 20,
@@ -225,12 +225,8 @@ const Classes: React.FC = () => {
     switch (type) {
       case 'Online':
         return <Video size={16} className="text-blue-500" />;
-      case 'In-Person':
-        return <MapPin size={16} className="text-green-500" />;
-      case 'Hybrid':
-        return <Users size={16} className="text-purple-500" />;
       default:
-        return <Calendar size={16} className="text-gray-500" />;
+        return <Video size={16} className="text-blue-500" />;
     }
   };
 
@@ -592,16 +588,12 @@ const Classes: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Class Type *
                   </label>
-                  <select
-                    value={newClass.type}
-                    onChange={(e) => setNewClass({...newClass, type: e.target.value as 'Online' | 'In-Person' | 'Hybrid'})}
+                  <input
+                    type="text"
+                    value="Online"
+                    readOnly
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    required
-                  >
-                    <option value="Online">Online</option>
-                    <option value="In-Person">In-Person</option>
-                    <option value="Hybrid">Hybrid</option>
-                  </select>
+                  />
                 </div>
               </div>
 
