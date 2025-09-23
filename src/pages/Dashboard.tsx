@@ -109,9 +109,19 @@ const volunteerWidgets = {
       date: "2025-09-17"
     }
   ],
-    { title: 'Students', value: 45, icon: Users, color: 'bg-[#F25274]' },
-    { title: 'Feedback Score', value: '4.9', icon: Star, color: 'bg-yellow-500' }
-  ];
+  contributionSummary: {
+    totalHours: "28.5",
+    classesSupported: 19,
+    membersHelped: 45,
+    appreciationNotes: 12
+  }
+};
+
+const teacherStats = [
+  { title: 'My Classes', value: 8, icon: Calendar, color: 'bg-[#6CBFC4]' },
+  { title: 'Students', value: 45, icon: Users, color: 'bg-[#F25274]' },
+  { title: 'Feedback Score', value: '4.9', icon: Star, color: 'bg-yellow-500' }
+];
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -127,11 +137,7 @@ const Dashboard: React.FC = () => {
     if (user?.role === 'super_admin') {
       return null; // Super admin uses widgets instead
     } else if (user?.role === 'teacher') {
-      return [
-        { title: 'My Classes', value: 8, icon: Calendar, color: 'bg-[#6CBFC4]' },
-        { title: 'Students', value: 45, icon: Users, color: 'bg-[#F25274]' },
-        { title: 'Feedback Score', value: '4.9', icon: Star, color: 'bg-yellow-500' },
-        return <Video size={16} className="text-blue-500" />;
+      return teacherStats;
     }
   };
 
