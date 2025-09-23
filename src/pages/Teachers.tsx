@@ -182,6 +182,10 @@ const Teachers: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
+          <h1 className="text-2xl font-bold text-gray-900">Instructors</h1>
+          <p className="text-gray-600">Manage your yoga instructors and volunteers</p>
+        </div>
+        <button
           type="button"
           onClick={handleAddInstructor}
           className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
@@ -189,7 +193,6 @@ const Teachers: React.FC = () => {
           <Plus size={16} />
           <span>Add Instructor</span>
         </button>
-      </div>
       </div>
 
       {/* Statistics */}
@@ -545,7 +548,38 @@ const Teachers: React.FC = () => {
                   </div>
                 </div>
                 
-
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Certifications
+                  </label>
+                  {formData.certifications.map((cert, index) => (
+                    <div key={index} className="flex items-center space-x-2 mb-2">
+                      <input
+                        type="text"
+                        value={cert}
+                        onChange={(e) => handleCertificationChange(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        placeholder="Enter certification"
+                      />
+                      {formData.certifications.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeCertification(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addCertification}
+                    className="text-[#F25274] hover:text-[#F25274]/80 text-sm font-medium"
+                  >
+                    + Add Certification
+                  </button>
+                </div>
 
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1196,6 +1230,7 @@ const Teachers: React.FC = () => {
         </div>
       </div>
     </div>
+  );
 };
 
 export default Teachers;
