@@ -109,10 +109,8 @@ const volunteerWidgets = {
       date: "2025-09-17"
     }
   ],
-  contributionSummary: {
-    totalHours: 28.5,
-    classesSupported: 19,
-    membersHelped: 45,
+    { title: 'Students', value: 45, icon: Users, color: 'bg-[#F25274]' },
+    { title: 'Feedback Score', value: '4.9', icon: Star, color: 'bg-yellow-500' }
   ];
 
 const Dashboard: React.FC = () => {
