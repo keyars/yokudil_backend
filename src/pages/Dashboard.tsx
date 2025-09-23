@@ -113,9 +113,7 @@ const volunteerWidgets = {
     totalHours: 28.5,
     classesSupported: 19,
     membersHelped: 45,
-    appreciationNotes: 12
-  }
-};
+  ];
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
