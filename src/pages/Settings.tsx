@@ -58,24 +58,17 @@ interface SettingsData {
     };
     loginAttempts: number;
   };
-  appearance: {
-    theme: string;
-    primaryColor: string;
-    fontSize: string;
-    compactMode: boolean;
-  };
   integrations: {
     zoomEnabled: boolean;
     zoomApiKey: string;
     emailProvider: string;
     emailApiKey: string;
-    smsProvider: string;
-    smsApiKey: string;
   };
 }
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'system' | 'security' | 'appearance' | 'integrations'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'system' | 'security' | 'integrations'>('profile');
   const [showApiKeys, setShowApiKeys] = useState<{[key: string]: boolean}>({});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -117,19 +110,11 @@ const Settings: React.FC = () => {
       },
       loginAttempts: 5
     },
-    appearance: {
-      theme: 'light',
-      primaryColor: '#F25274',
-      fontSize: 'medium',
-      compactMode: false
-    },
     integrations: {
       zoomEnabled: true,
       zoomApiKey: 'zoom_api_key_hidden',
       emailProvider: 'smtp',
-      emailApiKey: 'email_api_key_hidden',
-      smsProvider: 'twilio',
-      smsApiKey: 'sms_api_key_hidden'
+      emailApiKey: 'email_api_key_hidden'
     }
   });
 
@@ -190,7 +175,6 @@ const Settings: React.FC = () => {
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'system', name: 'System', icon: Database },
     { id: 'security', name: 'Security', icon: Shield },
-    { id: 'appearance', name: 'Appearance', icon: Palette },
     { id: 'integrations', name: 'Integrations', icon: Globe }
   ];
 
@@ -635,105 +619,6 @@ const Settings: React.FC = () => {
             </div>
           )}
 
-          {/* Appearance Tab */}
-          {activeTab === 'appearance' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Appearance Settings</h2>
-                <p className="text-sm text-gray-600 mb-6">Customize the look and feel of your application.</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Theme
-                  </label>
-                  <select
-                    value={settings.appearance.theme}
-                    onChange={(e) => updateSettings('appearance', 'theme', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                  >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="auto">Auto (System)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Font Size
-                  </label>
-                  <select
-                    value={settings.appearance.fontSize}
-                    onChange={(e) => updateSettings('appearance', 'fontSize', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                  >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Primary Color
-                  </label>
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="color"
-                      value={settings.appearance.primaryColor}
-                      onChange={(e) => updateSettings('appearance', 'primaryColor', e.target.value)}
-                      className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={settings.appearance.primaryColor}
-                      onChange={(e) => updateSettings('appearance', 'primaryColor', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900">Compact Mode</h3>
-                  <p className="text-sm text-gray-600">Use smaller spacing and components for more content</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.appearance.compactMode}
-                    onChange={(e) => updateSettings('appearance', 'compactMode', e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#F25274]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F25274]"></div>
-                </label>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-3">Preview</h3>
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div 
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: settings.appearance.primaryColor }}
-                    ></div>
-                    <span className="font-medium">Sample Header</span>
-                  </div>
-                  <p className={`text-gray-600 ${settings.appearance.fontSize === 'small' ? 'text-sm' : settings.appearance.fontSize === 'large' ? 'text-lg' : 'text-base'}`}>
-                    This is how your content will appear with the current settings.
-                  </p>
-                  <button 
-                    className="mt-3 px-4 py-2 rounded-lg text-white text-sm"
-                    style={{ backgroundColor: settings.appearance.primaryColor }}
-                  >
-                    Sample Button
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Integrations Tab */}
           {activeTab === 'integrations' && (
@@ -845,58 +730,6 @@ const Settings: React.FC = () => {
                   </div>
                 </div>
 
-                {/* SMS Integration */}
-                <div className="border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Bell size={20} className="text-purple-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">SMS Service</h3>
-                      <p className="text-sm text-gray-600">Send SMS notifications and reminders</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        SMS Provider
-                      </label>
-                      <select
-                        value={settings.integrations.smsProvider}
-                        onChange={(e) => updateSettings('integrations', 'smsProvider', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      >
-                        <option value="twilio">Twilio</option>
-                        <option value="nexmo">Nexmo</option>
-                        <option value="textlocal">TextLocal</option>
-                        <option value="msg91">MSG91</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        API Key
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showApiKeys.sms ? "text" : "password"}
-                          value={settings.integrations.smsApiKey}
-                          onChange={(e) => updateSettings('integrations', 'smsApiKey', e.target.value)}
-                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                          placeholder="Enter API key"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => toggleApiKeyVisibility('sms')}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showApiKeys.sms ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
