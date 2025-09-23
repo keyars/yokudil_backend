@@ -190,6 +190,7 @@ const Teachers: React.FC = () => {
           <span>Add Instructor</span>
         </button>
       </div>
+      </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
