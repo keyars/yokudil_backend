@@ -1,232 +1,216 @@
 import React, { useState } from 'react';
-import { mockMembers, membershipLevels } from '../data/mockData';
-import { Search, Filter, Plus, Download, Eye, CreditCard as Edit, Trash2, X, Calendar, Phone, Mail, User, Heart, UserPlus, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { mockMembers } from '../data/mockData';
+import { 
+  Users, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Search, 
+  Filter, 
+  X, 
+  Save, 
+  User, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  Calendar,
+  Heart,
+  Shield,
+  Award,
+  UserCheck,
+  GraduationCap,
+  Briefcase
+} from 'lucide-react';
 
 interface Member {
   id: string;
   name: string;
   email: string;
   phone: string;
-  dateOfBirth: string;
-  gender: string;
   address: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
+  dateOfBirth: string;
   membershipLevel: string;
+  memberType: 'Member' | 'Teacher' | 'Volunteer';
   joinDate: string;
-  status: string;
-  invitationStatus: string;
-  healthMetrics: {
-    height: string;
-    weight: string;
-    waist: string;
-    hip: string;
-    armSize: string;
-    lastUpdated: string;
-  };
+  status: 'Active' | 'Inactive' | 'Suspended';
+  tshirtSize: 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL';
+  referredByName?: string;
+  referredByPhone?: string;
   medicalInfo: {
-    conditions: string[];
-    lastCheckup: string;
-    vitaminD: string;
+    bloodGroup: string;
+    allergies: string;
+    medications: string;
+    emergencyContactName: string;
+    emergencyContactPhone: string;
     ferritin: string;
-    remarks: string;
+    b12: string;
+    vitaminD: string;
+    papSmear: string;
+    memogram: string;
   };
-  attendanceRate: number;
-  totalClasses: number;
-  lastActive: string;
+  professionalInfo?: {
+    specialization: string;
+    experience: string;
+    bio: string;
+  };
 }
 
 const Members: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterLevel, setFilterLevel] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterGender, setFilterGender] = useState('');
-  const [filterJoinDate, setFilterJoinDate] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [members, setMembers] = useState<Member[]>(mockMembers);
-  const itemsPerPage = 20;
+  const [members, setMembers] = useState<Member[]>(mockMembers.map(member => ({
+    ...member,
+    memberType: 'Member' as 'Member' | 'Teacher' | 'Volunteer',
+    tshirtSize: 'M' as 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL',
+    referredByName: '',
+    referredByPhone: '',
+    medicalInfo: {
+      bloodGroup: member.medicalInfo?.bloodGroup || '',
+      allergies: member.medicalInfo?.allergies || '',
+      medications: member.medicalInfo?.medications || '',
+      emergencyContactName: member.medicalInfo?.emergencyContactName || '',
+      emergencyContactPhone: member.medicalInfo?.emergencyContactPhone || '',
+      ferritin: '',
+      b12: '',
+      vitaminD: '',
+      papSmear: '',
+      memogram: ''
+    },
+    professionalInfo: undefined
+  })));
 
-  // Form states for Add/Edit Member
-  const [formData, setFormData] = useState({
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  const [newMember, setNewMember] = useState({
     name: '',
     email: '',
     phone: '',
-    dateOfBirth: '',
-    gender: '',
     address: '',
-    emergencyContactName: '',
-    emergencyContactPhone: '',
-    emergencyContactRelationship: '',
+    dateOfBirth: '',
     membershipLevel: 'Arumbu Ani',
-    healthHeight: '',
-    healthWeight: '',
-    healthWaist: '',
-    healthHip: '',
-    healthArmSize: '',
-    medicalConditions: '',
-    vitaminD: 'Normal',
-    ferritin: 'Normal',
-    remarks: ''
+    memberType: 'Member' as 'Member' | 'Teacher' | 'Volunteer',
+    tshirtSize: 'M' as 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL',
+    referredByName: '',
+    referredByPhone: '',
+    medicalInfo: {
+      bloodGroup: '',
+      allergies: '',
+      medications: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      ferritin: '',
+      b12: '',
+      vitaminD: '',
+      papSmear: '',
+      memogram: ''
+    },
+    professionalInfo: {
+      specialization: '',
+      experience: '',
+      bio: ''
+    }
   });
 
-  // Filter members
-  const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLevel = filterLevel === '' || member.membershipLevel === filterLevel;
-    const matchesStatus = filterStatus === '' || member.status === filterStatus;
-    const matchesGender = filterGender === '' || member.gender === filterGender;
-    const matchesJoinDate = filterJoinDate === '' || member.joinDate.includes(filterJoinDate);
-    
-    return matchesSearch && matchesLevel && matchesStatus && matchesGender && matchesJoinDate;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage);
-
-  // Get pending approvals
-  const pendingApprovals = members.filter(member => member.invitationStatus === 'pending');
-
-  const exportToCSV = () => {
-    const csvContent = [
-      ['ID', 'Name', 'Email', 'Phone', 'Level', 'Status', 'Join Date', 'Attendance Rate'].join(','),
-      ...filteredMembers.map(member => [
-        member.id,
-        member.name,
-        member.email,
-        member.phone,
-        member.membershipLevel,
-        member.status,
-        member.joinDate,
-        `${member.attendanceRate}%`
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'members.csv';
-    a.click();
-  };
+  const membershipLevels = ['Arumbu Ani', 'Mottu Ani', 'Mugai Ani', 'Malar Ani'];
+  const memberTypes = ['Member', 'Teacher', 'Volunteer'];
+  const tshirtSizes = [
+    { value: 'XS', label: 'Extra Small (XS)' },
+    { value: 'S', label: 'Small (S)' },
+    { value: 'M', label: 'Medium (M)' },
+    { value: 'L', label: 'Large (L)' },
+    { value: 'XL', label: 'Extra Large (XL)' },
+    { value: 'XXL', label: 'Double XL (XXL)' }
+  ];
 
   const resetForm = () => {
-    setFormData({
+    setNewMember({
       name: '',
       email: '',
       phone: '',
-      dateOfBirth: '',
-      gender: '',
       address: '',
-      emergencyContactName: '',
-      emergencyContactPhone: '',
-      emergencyContactRelationship: '',
+      dateOfBirth: '',
       membershipLevel: 'Arumbu Ani',
-      healthHeight: '',
-      healthWeight: '',
-      healthWaist: '',
-      healthHip: '',
-      healthArmSize: '',
-      medicalConditions: '',
-      vitaminD: 'Normal',
-      ferritin: 'Normal',
-      remarks: ''
+      memberType: 'Member',
+      tshirtSize: 'M',
+      referredByName: '',
+      referredByPhone: '',
+      medicalInfo: {
+        bloodGroup: '',
+        allergies: '',
+        medications: '',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+        ferritin: '',
+        b12: '',
+        vitaminD: '',
+        papSmear: '',
+        memogram: ''
+      },
+      professionalInfo: {
+        specialization: '',
+        experience: '',
+        bio: ''
+      }
     });
   };
 
-  const handleAddMember = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newMember: Member = {
-      id: `M${String(members.length + 1).padStart(4, '0')}`,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      dateOfBirth: formData.dateOfBirth,
-      gender: formData.gender,
-      address: formData.address,
-      emergencyContact: {
-        name: formData.emergencyContactName,
-        phone: formData.emergencyContactPhone,
-        relationship: formData.emergencyContactRelationship
-      },
-      membershipLevel: formData.membershipLevel,
+    
+    const memberData: Member = {
+      id: `M${String(members.length + 1).padStart(3, '0')}`,
+      ...newMember,
       joinDate: new Date().toISOString().split('T')[0],
       status: 'Active',
-      invitationStatus: 'approved',
-      healthMetrics: {
-        height: formData.healthHeight,
-        weight: formData.healthWeight,
-        waist: formData.healthWaist,
-        hip: formData.healthHip,
-        armSize: formData.healthArmSize,
-        lastUpdated: new Date().toISOString().split('T')[0]
-      },
-      medicalInfo: {
-        conditions: formData.medicalConditions ? formData.medicalConditions.split(',').map(c => c.trim()) : ['None'],
-        lastCheckup: new Date().toISOString().split('T')[0],
-        vitaminD: formData.vitaminD,
-        ferritin: formData.ferritin,
-        remarks: formData.remarks
-      },
-      attendanceRate: 0,
-      totalClasses: 0,
-      lastActive: new Date().toISOString().split('T')[0]
+      professionalInfo: (newMember.memberType === 'Teacher' || newMember.memberType === 'Volunteer') 
+        ? newMember.professionalInfo 
+        : undefined
     };
 
-    setMembers([...members, newMember]);
+    setMembers([...members, memberData]);
     setShowAddModal(false);
     resetForm();
   };
 
-  const handleEditMember = (e: React.FormEvent) => {
+  const handleEdit = (member: Member) => {
+    setSelectedMember(member);
+    setNewMember({
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+      address: member.address,
+      dateOfBirth: member.dateOfBirth,
+      membershipLevel: member.membershipLevel,
+      memberType: member.memberType,
+      tshirtSize: member.tshirtSize,
+      referredByName: member.referredByName || '',
+      referredByPhone: member.referredByPhone || '',
+      medicalInfo: member.medicalInfo,
+      professionalInfo: member.professionalInfo || {
+        specialization: '',
+        experience: '',
+        bio: ''
+      }
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedMember) return;
 
     const updatedMembers = members.map(member => 
       member.id === selectedMember.id 
-        ? {
-            ...member,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            dateOfBirth: formData.dateOfBirth,
-            gender: formData.gender,
-            address: formData.address,
-            emergencyContact: {
-              name: formData.emergencyContactName,
-              phone: formData.emergencyContactPhone,
-              relationship: formData.emergencyContactRelationship
-            },
-            membershipLevel: formData.membershipLevel,
-            healthMetrics: {
-              ...member.healthMetrics,
-              height: formData.healthHeight,
-              weight: formData.healthWeight,
-              waist: formData.healthWaist,
-              hip: formData.healthHip,
-              armSize: formData.healthArmSize,
-              lastUpdated: new Date().toISOString().split('T')[0]
-            },
-            medicalInfo: {
-              ...member.medicalInfo,
-              conditions: formData.medicalConditions ? formData.medicalConditions.split(',').map(c => c.trim()) : ['None'],
-              vitaminD: formData.vitaminD,
-              ferritin: formData.ferritin,
-              remarks: formData.remarks
-            }
+        ? { 
+            ...member, 
+            ...newMember,
+            professionalInfo: (newMember.memberType === 'Teacher' || newMember.memberType === 'Volunteer') 
+              ? newMember.professionalInfo 
+              : undefined
           }
         : member
     );
@@ -237,119 +221,165 @@ const Members: React.FC = () => {
     resetForm();
   };
 
-  const handleViewMember = (member: Member) => {
-    setSelectedMember(member);
-    setShowViewModal(true);
-  };
-
-  const handleEditClick = (member: Member) => {
-    setSelectedMember(member);
-    setFormData({
-      name: member.name,
-      email: member.email,
-      phone: member.phone,
-      dateOfBirth: member.dateOfBirth,
-      gender: member.gender,
-      address: member.address,
-      emergencyContactName: member.emergencyContact.name,
-      emergencyContactPhone: member.emergencyContact.phone,
-      emergencyContactRelationship: member.emergencyContact.relationship,
-      membershipLevel: member.membershipLevel,
-      healthHeight: member.healthMetrics.height,
-      healthWeight: member.healthMetrics.weight,
-      healthWaist: member.healthMetrics.waist,
-      healthHip: member.healthMetrics.hip,
-      healthArmSize: member.healthMetrics.armSize,
-      medicalConditions: member.medicalInfo.conditions.join(', '),
-      vitaminD: member.medicalInfo.vitaminD,
-      ferritin: member.medicalInfo.ferritin,
-      remarks: member.medicalInfo.remarks
-    });
-    setShowEditModal(true);
-  };
-
-  const handleDeleteMember = (memberId: string) => {
+  const handleDelete = (memberId: string) => {
     if (window.confirm('Are you sure you want to delete this member?')) {
       setMembers(members.filter(member => member.id !== memberId));
     }
   };
 
-  const generateInviteCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  };
+  const filteredMembers = members.filter(member => {
+    const matchesSearch = searchTerm === '' || 
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.phone.includes(searchTerm);
+    const matchesLevel = levelFilter === '' || member.membershipLevel === levelFilter;
+    const matchesType = typeFilter === '' || member.memberType === typeFilter;
+    const matchesStatus = statusFilter === '' || member.status === statusFilter;
+    
+    return matchesSearch && matchesLevel && matchesType && matchesStatus;
+  });
 
-  const handleSendInvite = () => {
-    const inviteCode = generateInviteCode();
-    alert(`Invitation sent! Invite Code: ${inviteCode}`);
-    setShowInviteModal(false);
-  };
-
-  const handleApproveMember = (memberId: string) => {
-    const updatedMembers = members.map(member => 
-      member.id === memberId 
-        ? { ...member, status: 'Active', invitationStatus: 'approved' }
-        : member
-    );
-    setMembers(updatedMembers);
-  };
-
-  const handleRejectMember = (memberId: string) => {
-    if (window.confirm('Are you sure you want to reject this member application?')) {
-      setMembers(members.filter(member => member.id !== memberId));
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active':
+        return 'bg-green-100 text-green-800';
+      case 'Inactive':
+        return 'bg-gray-100 text-gray-800';
+      case 'Suspended':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'Arumbu Ani':
+        return 'bg-pink-100 text-pink-800';
+      case 'Mottu Ani':
+        return 'bg-teal-100 text-teal-800';
+      case 'Mugai Ani':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Malar Ani':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'Teacher':
+        return 'bg-blue-100 text-blue-800';
+      case 'Volunteer':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'Teacher':
+        return <GraduationCap size={16} />;
+      case 'Volunteer':
+        return <Heart size={16} />;
+      default:
+        return <User size={16} />;
+    }
+  };
+
+  // Calculate statistics
+  const stats = {
+    total: members.length,
+    active: members.filter(m => m.status === 'Active').length,
+    teachers: members.filter(m => m.memberType === 'Teacher').length,
+    volunteers: members.filter(m => m.memberType === 'Volunteer').length,
+    regularMembers: members.filter(m => m.memberType === 'Member').length
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Member Management</h1>
-          <p className="text-gray-600 mt-1">Manage your yoga community members</p>
+          <h1 className="text-3xl font-bold text-gray-900">Members Management</h1>
+          <p className="text-gray-600 mt-1">Manage all members, teachers, and volunteers</p>
         </div>
-        <div className="flex items-center space-x-3">
-          {pendingApprovals.length > 0 && (
-            <button
-              onClick={() => setShowApprovalModal(true)}
-              type="button"
-              className="flex items-center space-x-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 relative"
-            >
-              <UserPlus size={16} />
-              <span>Approvals</span>
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {pendingApprovals.length}
-              </span>
-            </button>
-          )}
-          <button
-            onClick={() => setShowInviteModal(true)}
-            type="button"
-            className="flex items-center space-x-2 px-4 py-2 border border-[#6CBFC4] text-[#6CBFC4] rounded-lg hover:bg-[#6CBFC4] hover:text-white"
-          >
-            <Mail size={16} />
-            <span>Invite</span>
-          </button>
-          <button
-            onClick={exportToCSV}
-            type="button"
-            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            <Download size={16} />
-            <span>Export</span>
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            type="button"
-            className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
-          >
-            <Plus size={16} />
-            <span>Add Member</span>
-          </button>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
+        >
+          <Plus size={16} />
+          <span>Add Member</span>
+        </button>
+      </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Members</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total}</p>
+            </div>
+            <div className="bg-[#F25274] p-3 rounded-full">
+              <Users size={24} className="text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Members</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.active}</p>
+            </div>
+            <div className="bg-green-500 p-3 rounded-full">
+              <UserCheck size={24} className="text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Teachers</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.teachers}</p>
+            </div>
+            <div className="bg-blue-500 p-3 rounded-full">
+              <GraduationCap size={24} className="text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Volunteers</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.volunteers}</p>
+            </div>
+            <div className="bg-[#6CBFC4] p-3 rounded-full">
+              <Heart size={24} className="text-white" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Regular Members</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.regularMembers}</p>
+            </div>
+            <div className="bg-[#F3E682] p-3 rounded-full">
+              <User size={24} className="text-gray-800" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -360,9 +390,21 @@ const Members: React.FC = () => {
               className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
             />
           </div>
+          
           <select
-            value={filterLevel}
-            onChange={(e) => setFilterLevel(e.target.value)}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+          >
+            <option value="">All Types</option>
+            {memberTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+          
+          <select
+            value={levelFilter}
+            onChange={(e) => setLevelFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
           >
             <option value="">All Levels</option>
@@ -370,60 +412,23 @@ const Members: React.FC = () => {
               <option key={level} value={level}>{level}</option>
             ))}
           </select>
+
           <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
           >
             <option value="">All Status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
-            <option value="Pending">Pending</option>
+            <option value="Suspended">Suspended</option>
           </select>
-          <button 
-            onClick={() => setShowMoreFilters(!showMoreFilters)}
-            type="button"
-            className="flex items-center justify-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            <Filter size={16} />
-            <span>More Filters</span>
-          </button>
-        </div>
-
-        {/* More Filters */}
-        {showMoreFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-            <select
-              value={filterGender}
-              onChange={(e) => setFilterGender(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-            >
-              <option value="">All Genders</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-            <input
-              type="month"
-              value={filterJoinDate}
-              onChange={(e) => setFilterJoinDate(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-              placeholder="Join Date"
-            />
-            <button
-              onClick={() => {
-                setFilterLevel('');
-                setFilterStatus('');
-                setFilterGender('');
-                setFilterJoinDate('');
-                setSearchTerm('');
-              }}
-              type="button"
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-            >
-              Clear All Filters
-            </button>
+          
+          <div className="flex items-center text-sm text-gray-600">
+            <Filter size={16} className="mr-2" />
+            <span>{filteredMembers.length} of {members.length}</span>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Members Table */}
@@ -433,19 +438,19 @@ const Members: React.FC = () => {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Member
+                  Member Details
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
+                  Type & Level
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Level
+                  T-Shirt Size
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Attendance
+                  Join Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -453,67 +458,55 @@ const Members: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedMembers.map((member) => (
+              {filteredMembers.map((member) => (
                 <tr key={member.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-[#6CBFC4] rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium text-sm">
-                          {member.name.split(' ').map(n => n[0]).join('')}
-                        </span>
+                        {getTypeIcon(member.memberType)}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                        <div className="text-sm text-gray-500">{member.id}</div>
+                        <div className="text-sm text-gray-500">{member.email}</div>
+                        <div className="text-sm text-gray-500">{member.phone}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{member.email}</div>
-                    <div className="text-sm text-gray-500">{member.phone}</div>
+                    <div className="space-y-1">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(member.memberType)}`}>
+                        {member.memberType}
+                      </span>
+                      <div>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelColor(member.membershipLevel)}`}>
+                          {member.membershipLevel}
+                        </span>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium bg-[#F3E682] text-gray-900 rounded-full">
-                      {member.membershipLevel}
-                    </span>
+                    <span className="text-sm font-medium text-gray-900">{member.tshirtSize}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      member.status === 'Active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : member.status === 'Pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(member.status)}`}>
                       {member.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{member.attendanceRate}%</div>
-                    <div className="text-sm text-gray-500">{member.totalClasses} classes</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {member.joinDate}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        onClick={() => handleViewMember(member)}
-                        type="button"
-                        className="text-[#6CBFC4] hover:text-[#6CBFC4]/80"
-                        title="View Member"
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleEditClick(member)}
-                        type="button"
-                        className="text-[#F3E682] hover:text-[#F3E682]/80"
+                        onClick={() => handleEdit(member)}
+                        className="text-[#6CBFC4] hover:text-[#6CBFC4]/80 p-1"
                         title="Edit Member"
                       >
                         <Edit size={16} />
                       </button>
                       <button 
-                        onClick={() => handleDeleteMember(member.id)}
-                        type="button"
-                        className="text-red-600 hover:text-red-800"
+                        onClick={() => handleDelete(member.id)}
+                        className="text-red-600 hover:text-red-800 p-1"
                         title="Delete Member"
                       >
                         <Trash2 size={16} />
@@ -527,124 +520,106 @@ const Members: React.FC = () => {
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-700">
-          Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredMembers.length)} of {filteredMembers.length} members
-        </div>
-        <div className="flex items-center space-x-2">
-          <button 
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            type="button"
-            className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft size={16} />
-            <span>Previous</span>
-          </button>
-          
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              type="button"
-              className={`px-3 py-2 rounded-lg ${
-                currentPage === page
-                  ? 'bg-[#F25274] text-white'
-                  : 'border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-          
-          <button 
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            type="button"
-            className="flex items-center px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span>Next</span>
-            <ChevronRight size={16} />
-          </button>
-        </div>
-      </div>
-
       {/* Add Member Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Add New Member</h2>
-                <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <X size={24} />
-                </button>
-              </div>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Add New Member</h2>
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  resetForm();
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
             </div>
-            <form onSubmit={handleAddMember} className="p-6 space-y-6">
-              {/* Personal Information */}
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-8">
+              {/* Basic Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <User className="mr-2 text-[#F25274]" size={20} />
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name *
+                    </label>
                     <input
                       type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      value={newMember.name}
+                      onChange={(e) => setNewMember({...newMember, name: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
                     <input
                       type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      value={newMember.email}
+                      onChange={(e) => setNewMember({...newMember, email: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number *
+                    </label>
                     <input
                       type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      value={newMember.phone}
+                      onChange={(e) => setNewMember({...newMember, phone: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date of Birth *
+                    </label>
                     <input
                       type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
+                      value={newMember.dateOfBirth}
+                      onChange={(e) => setNewMember({...newMember, dateOfBirth: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Member Type *
+                    </label>
                     <select
-                      value={formData.gender}
-                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      value={newMember.memberType}
+                      onChange={(e) => setNewMember({...newMember, memberType: e.target.value as 'Member' | 'Teacher' | 'Volunteer'})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      {memberTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
                     </select>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Membership Level *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Membership Level *
+                    </label>
                     <select
-                      value={formData.membershipLevel}
-                      onChange={(e) => setFormData({...formData, membershipLevel: e.target.value})}
+                      value={newMember.membershipLevel}
+                      onChange={(e) => setNewMember({...newMember, membershipLevel: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     >
@@ -653,368 +628,337 @@ const Members: React.FC = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      T-Shirt Size *
+                    </label>
+                    <select
+                      value={newMember.tshirtSize}
+                      onChange={(e) => setNewMember({...newMember, tshirtSize: e.target.value as any})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      rows={3}
                       required
+                    >
+                      {tshirtSizes.map(size => (
+                        <option key={size.value} value={size.value}>{size.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address
+                    </label>
+                    <textarea
+                      value={newMember.address}
+                      onChange={(e) => setNewMember({...newMember, address: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Emergency Contact */}
+              {/* Referral Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Emergency Contact</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Users className="mr-2 text-[#6CBFC4]" size={20} />
+                  Referral Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Referred By Name
+                    </label>
                     <input
                       type="text"
-                      value={formData.emergencyContactName}
-                      onChange={(e) => setFormData({...formData, emergencyContactName: e.target.value})}
+                      value={newMember.referredByName}
+                      onChange={(e) => setNewMember({...newMember, referredByName: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      required
+                      placeholder="Name of the person who referred"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Referred By Phone Number
+                    </label>
                     <input
                       type="tel"
-                      value={formData.emergencyContactPhone}
-                      onChange={(e) => setFormData({...formData, emergencyContactPhone: e.target.value})}
+                      value={newMember.referredByPhone}
+                      onChange={(e) => setNewMember({...newMember, referredByPhone: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Relationship *</label>
-                    <input
-                      type="text"
-                      value={formData.emergencyContactRelationship}
-                      onChange={(e) => setFormData({...formData, emergencyContactRelationship: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., Spouse, Parent, Sibling"
-                      required
+                      placeholder="Phone number of referrer"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Health Metrics */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Health Metrics</h3>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Height</label>
-                    <input
-                      type="text"
-                      value={formData.healthHeight}
-                      onChange={(e) => setFormData({...formData, healthHeight: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 165cm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Weight</label>
-                    <input
-                      type="text"
-                      value={formData.healthWeight}
-                      onChange={(e) => setFormData({...formData, healthWeight: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 55kg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Waist</label>
-                    <input
-                      type="text"
-                      value={formData.healthWaist}
-                      onChange={(e) => setFormData({...formData, healthWaist: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 28in"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Hip</label>
-                    <input
-                      type="text"
-                      value={formData.healthHip}
-                      onChange={(e) => setFormData({...formData, healthHip: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 35in"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Arm Size</label>
-                    <input
-                      type="text"
-                      value={formData.healthArmSize}
-                      onChange={(e) => setFormData({...formData, healthArmSize: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 12in"
-                    />
+              {/* Professional Information - Only for Teachers/Volunteers */}
+              {(newMember.memberType === 'Teacher' || newMember.memberType === 'Volunteer') && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Briefcase className="mr-2 text-[#F3E682]" size={20} />
+                    Professional Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Specialization
+                      </label>
+                      <input
+                        type="text"
+                        value={newMember.professionalInfo.specialization}
+                        onChange={(e) => setNewMember({
+                          ...newMember, 
+                          professionalInfo: {
+                            ...newMember.professionalInfo,
+                            specialization: e.target.value
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        placeholder="e.g., Hatha Yoga, Vinyasa, Meditation"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Experience
+                      </label>
+                      <input
+                        type="text"
+                        value={newMember.professionalInfo.experience}
+                        onChange={(e) => setNewMember({
+                          ...newMember, 
+                          professionalInfo: {
+                            ...newMember.professionalInfo,
+                            experience: e.target.value
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        placeholder="e.g., 5 years, Beginner, Advanced"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bio
+                      </label>
+                      <textarea
+                        value={newMember.professionalInfo.bio}
+                        onChange={(e) => setNewMember({
+                          ...newMember, 
+                          professionalInfo: {
+                            ...newMember.professionalInfo,
+                            bio: e.target.value
+                          }
+                        })}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        placeholder="Brief professional background and qualifications..."
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Medical Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Medical Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Heart className="mr-2 text-red-500" size={20} />
+                  Medical Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Medical Conditions</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Blood Group
+                    </label>
+                    <select
+                      value={newMember.medicalInfo.bloodGroup}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, bloodGroup: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    >
+                      <option value="">Select Blood Group</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ferritin
+                    </label>
                     <input
                       type="text"
-                      value={formData.medicalConditions}
-                      onChange={(e) => setFormData({...formData, medicalConditions: e.target.value})}
+                      value={newMember.medicalInfo.ferritin}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, ferritin: e.target.value}
+                      })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="Separate multiple conditions with commas"
+                      placeholder="Ferritin levels"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Vitamin D Level</label>
-                    <select
-                      value={formData.vitaminD}
-                      onChange={(e) => setFormData({...formData, vitaminD: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    >
-                      <option value="Normal">Normal</option>
-                      <option value="Low">Low</option>
-                      <option value="High">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Ferritin Level</label>
-                    <select
-                      value={formData.ferritin}
-                      onChange={(e) => setFormData({...formData, ferritin: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    >
-                      <option value="Normal">Normal</option>
-                      <option value="Low">Low</option>
-                      <option value="High">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      B12
+                    </label>
                     <input
                       type="text"
-                      value={formData.remarks}
-                      onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                      value={newMember.medicalInfo.b12}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, b12: e.target.value}
+                      })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="Additional notes"
+                      placeholder="B12 levels"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vitamin D
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.vitaminD}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, vitaminD: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Vitamin D levels"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Pap Smear
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.papSmear}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, papSmear: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Pap smear results/date"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Memogram
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.memogram}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, memogram: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Memogram results/date"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Allergies
+                    </label>
+                    <textarea
+                      value={newMember.medicalInfo.allergies}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, allergies: e.target.value}
+                      })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Any known allergies..."
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Current Medications
+                    </label>
+                    <textarea
+                      value={newMember.medicalInfo.medications}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, medications: e.target.value}
+                      })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Current medications..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Emergency Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.emergencyContactName}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, emergencyContactName: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Emergency contact name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Emergency Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={newMember.medicalInfo.emergencyContactPhone}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, emergencyContactPhone: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Emergency contact phone"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    resetForm();
+                  }}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
+                  className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
                 >
-                  Add Member
+                  <Save size={16} />
+                  <span>Add Member</span>
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* View Member Modal */}
-      {showViewModal && selectedMember && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Member Details</h2>
-                <button onClick={() => setShowViewModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-            <div className="p-6 space-y-6">
-              {/* Personal Information */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-3">
-                    <User className="text-gray-400" size={20} />
-                    <div>
-                      <p className="text-sm text-gray-600">Full Name</p>
-                      <p className="font-medium">{selectedMember.name}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Mail className="text-gray-400" size={20} />
-                    <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{selectedMember.email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone className="text-gray-400" size={20} />
-                    <div>
-                      <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{selectedMember.phone}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="text-gray-400" size={20} />
-                    <div>
-                      <p className="text-sm text-gray-600">Date of Birth</p>
-                      <p className="font-medium">{selectedMember.dateOfBirth}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Gender</p>
-                    <p className="font-medium">{selectedMember.gender}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Membership Level</p>
-                    <span className="px-2 py-1 text-xs font-medium bg-[#F3E682] text-gray-900 rounded-full">
-                      {selectedMember.membershipLevel}
-                    </span>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-gray-600">Address</p>
-                    <p className="font-medium">{selectedMember.address}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Emergency Contact */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                  <Heart className="text-red-500 mr-2" size={20} />
-                  Emergency Contact
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-red-50 p-4 rounded-lg">
-                  <div>
-                    <p className="text-sm text-gray-600">Contact Name</p>
-                    <p className="font-medium">{selectedMember.emergencyContact.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Contact Phone</p>
-                    <p className="font-medium">{selectedMember.emergencyContact.phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Relationship</p>
-                    <p className="font-medium">{selectedMember.emergencyContact.relationship}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Health Metrics */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Health Metrics</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Height</p>
-                    <p className="font-medium">{selectedMember.healthMetrics.height}</p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Weight</p>
-                    <p className="font-medium">{selectedMember.healthMetrics.weight}</p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Waist</p>
-                    <p className="font-medium">{selectedMember.healthMetrics.waist}</p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Hip</p>
-                    <p className="font-medium">{selectedMember.healthMetrics.hip}</p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Arm Size</p>
-                    <p className="font-medium">{selectedMember.healthMetrics.armSize}</p>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Last updated: {selectedMember.healthMetrics.lastUpdated}</p>
-              </div>
-
-              {/* Medical Information */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Medical Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Medical Conditions</p>
-                    <p className="font-medium">{selectedMember.medicalInfo.conditions.join(', ')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Last Checkup</p>
-                    <p className="font-medium">{selectedMember.medicalInfo.lastCheckup}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Vitamin D Level</p>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      selectedMember.medicalInfo.vitaminD === 'Normal' ? 'bg-green-100 text-green-800' :
-                      selectedMember.medicalInfo.vitaminD === 'Low' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {selectedMember.medicalInfo.vitaminD}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Ferritin Level</p>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      selectedMember.medicalInfo.ferritin === 'Normal' ? 'bg-green-100 text-green-800' :
-                      selectedMember.medicalInfo.ferritin === 'Low' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {selectedMember.medicalInfo.ferritin}
-                    </span>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-gray-600">Remarks</p>
-                    <p className="font-medium">{selectedMember.medicalInfo.remarks}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Activity Summary */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Activity Summary</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-3 bg-[#F25274]/10 rounded-lg">
-                    <p className="text-2xl font-bold text-[#F25274]">{selectedMember.attendanceRate}%</p>
-                    <p className="text-sm text-gray-600">Attendance Rate</p>
-                  </div>
-                  <div className="text-center p-3 bg-[#6CBFC4]/10 rounded-lg">
-                    <p className="text-2xl font-bold text-[#6CBFC4]">{selectedMember.totalClasses}</p>
-                    <p className="text-sm text-gray-600">Total Classes</p>
-                  </div>
-                  <div className="text-center p-3 bg-[#F3E682]/10 rounded-lg">
-                    <p className="text-2xl font-bold text-gray-900">{selectedMember.joinDate}</p>
-                    <p className="text-sm text-gray-600">Join Date</p>
-                  </div>
-                  <div className="text-center p-3 bg-gray-100 rounded-lg">
-                    <p className="text-2xl font-bold text-gray-900">{selectedMember.lastActive}</p>
-                    <p className="text-sm text-gray-600">Last Active</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-200">
-              <button
-                onClick={() => setShowViewModal(false)}
-                type="button"
-                className="w-full px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -1023,78 +967,103 @@ const Members: React.FC = () => {
       {showEditModal && selectedMember && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Edit Member</h2>
-                <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <X size={24} />
-                </button>
-              </div>
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Edit Member</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setSelectedMember(null);
+                  resetForm();
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
             </div>
-            <form onSubmit={handleEditMember} className="p-6 space-y-6">
-              {/* Same form structure as Add Member Modal but with pre-filled values */}
-              {/* Personal Information */}
+
+            <form onSubmit={handleUpdate} className="p-6 space-y-8">
+              {/* Basic Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <User className="mr-2 text-[#F25274]" size={20} />
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Full Name *
+                    </label>
                     <input
                       type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      value={newMember.name}
+                      onChange={(e) => setNewMember({...newMember, name: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address *
+                    </label>
                     <input
                       type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      value={newMember.email}
+                      onChange={(e) => setNewMember({...newMember, email: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number *
+                    </label>
                     <input
                       type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      value={newMember.phone}
+                      onChange={(e) => setNewMember({...newMember, phone: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date of Birth *
+                    </label>
                     <input
                       type="date"
-                      value={formData.dateOfBirth}
-                      onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
+                      value={newMember.dateOfBirth}
+                      onChange={(e) => setNewMember({...newMember, dateOfBirth: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Member Type *
+                    </label>
                     <select
-                      value={formData.gender}
-                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      value={newMember.memberType}
+                      onChange={(e) => setNewMember({...newMember, memberType: e.target.value as 'Member' | 'Teacher' | 'Volunteer'})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      {memberTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
                     </select>
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Membership Level *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Membership Level *
+                    </label>
                     <select
-                      value={formData.membershipLevel}
-                      onChange={(e) => setFormData({...formData, membershipLevel: e.target.value})}
+                      value={newMember.membershipLevel}
+                      onChange={(e) => setNewMember({...newMember, membershipLevel: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                       required
                     >
@@ -1103,322 +1072,338 @@ const Members: React.FC = () => {
                       ))}
                     </select>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
-                    <textarea
-                      value={formData.address}
-                      onChange={(e) => setFormData({...formData, address: e.target.value})}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      T-Shirt Size *
+                    </label>
+                    <select
+                      value={newMember.tshirtSize}
+                      onChange={(e) => setNewMember({...newMember, tshirtSize: e.target.value as any})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      rows={3}
                       required
+                    >
+                      {tshirtSizes.map(size => (
+                        <option key={size.value} value={size.value}>{size.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Address
+                    </label>
+                    <textarea
+                      value={newMember.address}
+                      onChange={(e) => setNewMember({...newMember, address: e.target.value})}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Emergency Contact */}
+              {/* Referral Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Emergency Contact</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Users className="mr-2 text-[#6CBFC4]" size={20} />
+                  Referral Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Referred By Name
+                    </label>
                     <input
                       type="text"
-                      value={formData.emergencyContactName}
-                      onChange={(e) => setFormData({...formData, emergencyContactName: e.target.value})}
+                      value={newMember.referredByName}
+                      onChange={(e) => setNewMember({...newMember, referredByName: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      required
+                      placeholder="Name of the person who referred"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Referred By Phone Number
+                    </label>
                     <input
                       type="tel"
-                      value={formData.emergencyContactPhone}
-                      onChange={(e) => setFormData({...formData, emergencyContactPhone: e.target.value})}
+                      value={newMember.referredByPhone}
+                      onChange={(e) => setNewMember({...newMember, referredByPhone: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Relationship *</label>
-                    <input
-                      type="text"
-                      value={formData.emergencyContactRelationship}
-                      onChange={(e) => setFormData({...formData, emergencyContactRelationship: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., Spouse, Parent, Sibling"
-                      required
+                      placeholder="Phone number of referrer"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Health Metrics */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Health Metrics</h3>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Height</label>
-                    <input
-                      type="text"
-                      value={formData.healthHeight}
-                      onChange={(e) => setFormData({...formData, healthHeight: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 165cm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Weight</label>
-                    <input
-                      type="text"
-                      value={formData.healthWeight}
-                      onChange={(e) => setFormData({...formData, healthWeight: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 55kg"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Waist</label>
-                    <input
-                      type="text"
-                      value={formData.healthWaist}
-                      onChange={(e) => setFormData({...formData, healthWaist: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 28in"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Hip</label>
-                    <input
-                      type="text"
-                      value={formData.healthHip}
-                      onChange={(e) => setFormData({...formData, healthHip: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 35in"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Arm Size</label>
-                    <input
-                      type="text"
-                      value={formData.healthArmSize}
-                      onChange={(e) => setFormData({...formData, healthArmSize: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="e.g., 12in"
-                    />
+              {/* Professional Information - Only for Teachers/Volunteers */}
+              {(newMember.memberType === 'Teacher' || newMember.memberType === 'Volunteer') && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Briefcase className="mr-2 text-[#F3E682]" size={20} />
+                    Professional Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Specialization
+                      </label>
+                      <input
+                        type="text"
+                        value={newMember.professionalInfo.specialization}
+                        onChange={(e) => setNewMember({
+                          ...newMember, 
+                          professionalInfo: {
+                            ...newMember.professionalInfo,
+                            specialization: e.target.value
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        placeholder="e.g., Hatha Yoga, Vinyasa, Meditation"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Experience
+                      </label>
+                      <input
+                        type="text"
+                        value={newMember.professionalInfo.experience}
+                        onChange={(e) => setNewMember({
+                          ...newMember, 
+                          professionalInfo: {
+                            ...newMember.professionalInfo,
+                            experience: e.target.value
+                          }
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        placeholder="e.g., 5 years, Beginner, Advanced"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bio
+                      </label>
+                      <textarea
+                        value={newMember.professionalInfo.bio}
+                        onChange={(e) => setNewMember({
+                          ...newMember, 
+                          professionalInfo: {
+                            ...newMember.professionalInfo,
+                            bio: e.target.value
+                          }
+                        })}
+                        rows={4}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        placeholder="Brief professional background and qualifications..."
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* Medical Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Medical Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <Heart className="mr-2 text-red-500" size={20} />
+                  Medical Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Medical Conditions</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Blood Group
+                    </label>
+                    <select
+                      value={newMember.medicalInfo.bloodGroup}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, bloodGroup: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    >
+                      <option value="">Select Blood Group</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ferritin
+                    </label>
                     <input
                       type="text"
-                      value={formData.medicalConditions}
-                      onChange={(e) => setFormData({...formData, medicalConditions: e.target.value})}
+                      value={newMember.medicalInfo.ferritin}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, ferritin: e.target.value}
+                      })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="Separate multiple conditions with commas"
+                      placeholder="Ferritin levels"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Vitamin D Level</label>
-                    <select
-                      value={formData.vitaminD}
-                      onChange={(e) => setFormData({...formData, vitaminD: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    >
-                      <option value="Normal">Normal</option>
-                      <option value="Low">Low</option>
-                      <option value="High">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Ferritin Level</label>
-                    <select
-                      value={formData.ferritin}
-                      onChange={(e) => setFormData({...formData, ferritin: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    >
-                      <option value="Normal">Normal</option>
-                      <option value="Low">Low</option>
-                      <option value="High">High</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      B12
+                    </label>
                     <input
                       type="text"
-                      value={formData.remarks}
-                      onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                      value={newMember.medicalInfo.b12}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, b12: e.target.value}
+                      })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                      placeholder="Additional notes"
+                      placeholder="B12 levels"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Vitamin D
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.vitaminD}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, vitaminD: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Vitamin D levels"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Pap Smear
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.papSmear}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, papSmear: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Pap smear results/date"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Memogram
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.memogram}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, memogram: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Memogram results/date"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Allergies
+                    </label>
+                    <textarea
+                      value={newMember.medicalInfo.allergies}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, allergies: e.target.value}
+                      })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Any known allergies..."
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Current Medications
+                    </label>
+                    <textarea
+                      value={newMember.medicalInfo.medications}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, medications: e.target.value}
+                      })}
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Current medications..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Emergency Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newMember.medicalInfo.emergencyContactName}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, emergencyContactName: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Emergency contact name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Emergency Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={newMember.medicalInfo.emergencyContactPhone}
+                      onChange={(e) => setNewMember({
+                        ...newMember, 
+                        medicalInfo: {...newMember.medicalInfo, emergencyContactPhone: e.target.value}
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                      placeholder="Emergency contact phone"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowEditModal(false)}
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedMember(null);
+                    resetForm();
+                  }}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
+                  className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
                 >
-                  Update Member
+                  <Save size={16} />
+                  <span>Update Member</span>
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Invite Member Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Invite New Member</h2>
-                <button onClick={() => setShowInviteModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-[#6CBFC4] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Mail className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Send Invitation</h3>
-                <p className="text-gray-600">Generate an invitation code for new members to join</p>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                  <input
-                    type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    placeholder="Enter email address"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
-                  <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    rows={3}
-                    placeholder="Welcome message for the new member"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  onClick={() => setShowInviteModal(false)}
-                  type="button"
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSendInvite}
-                  type="button"
-                  className="px-4 py-2 bg-[#6CBFC4] text-white rounded-lg hover:bg-[#6CBFC4]/90"
-                >
-                  Send Invitation
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Member Approval Modal */}
-      {showApprovalModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Pending Member Approvals</h2>
-                <button onClick={() => setShowApprovalModal(false)} className="text-gray-400 hover:text-gray-600">
-                  <X size={24} />
-                </button>
-              </div>
-            </div>
-            <div className="p-6">
-              {pendingApprovals.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">All Caught Up!</h3>
-                  <p className="text-gray-600">No pending member approvals at this time.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {pendingApprovals.map((member) => (
-                    <div key={member.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-[#6CBFC4] rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium">
-                              {member.name.split(' ').map(n => n[0]).join('')}
-                            </span>
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-medium text-gray-900">{member.name}</h4>
-                            <p className="text-sm text-gray-600">{member.email}</p>
-                            <p className="text-sm text-gray-500">Applied: {member.joinDate}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleViewMember(member)}
-                            type="button"
-                            className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-                          >
-                            View Details
-                          </button>
-                          <button
-                            onClick={() => handleApproveMember(member.id)}
-                            type="button"
-                            className="flex items-center space-x-1 px-3 py-1 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600"
-                          >
-                            <CheckCircle size={16} />
-                            <span>Approve</span>
-                          </button>
-                          <button
-                            onClick={() => handleRejectMember(member.id)}
-                            type="button"
-                            className="flex items-center space-x-1 px-3 py-1 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600"
-                          >
-                            <XCircle size={16} />
-                            <span>Reject</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="p-6 border-t border-gray-200">
-              <button
-                onClick={() => setShowApprovalModal(false)}
-                type="button"
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}
