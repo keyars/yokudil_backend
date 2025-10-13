@@ -79,6 +79,35 @@ const Members: React.FC = () => {
     remarks: ''
   });
 
+  const [newMember, setNewMember] = useState({
+    name: '',
+    memberType: 'Member' as 'Member' | 'Teacher' | 'Volunteer',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    gender: '',
+    address: '',
+    membershipLevel: 'Arumbu Ani',
+    joinDate: '',
+    status: 'Active' as 'Active',
+    tshirtSize: '',
+    // Professional Information
+    specialization: '',
+    experience: '',
+    bio: '',
+    // Medical Information
+    bloodGroup: '',
+    allergies: '',
+    medications: '',
+    emergencyContact: '',
+    emergencyPhone: '',
+    ferritin: '',
+    b12: '',
+    vitaminD: '',
+    papSmear: '',
+    memogram: ''
+  });
+
   // Filter members
   const filteredMembers = members.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
