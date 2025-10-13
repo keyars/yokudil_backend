@@ -183,16 +183,9 @@ const Teachers: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Instructors</h1>
-          <p className="text-gray-600">Manage your yoga instructors and volunteers</p>
+          <p className="text-gray-600 mt-1">View and manage teachers and volunteers (managed through Members section)</p>
         </div>
         <button
-          type="button"
-          onClick={handleAddInstructor}
-          className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
-        >
-          <Plus size={16} />
-          <span>Add Instructor</span>
-        </button>
       </div>
 
       {/* Statistics */}
