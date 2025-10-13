@@ -5,7 +5,6 @@ import { Search, Filter, Plus, Download, Eye, CreditCard as Edit, Trash2, X, Cal
 interface Member {
   id: string;
   name: string;
-  memberType: 'Member' | 'Teacher' | 'Volunteer';
   email: string;
   phone: string;
   dateOfBirth: string;
@@ -33,20 +32,7 @@ interface Member {
     lastCheckup: string;
     vitaminD: string;
     ferritin: string;
-    b12: string;
-    papSmear: string;
-    memogram: string;
     remarks: string;
-  };
-  tshirtSize: 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL';
-  professionalInfo?: {
-    specialization: string;
-    experience: string;
-    bio: string;
-  };
-  referredBy: {
-    name: string;
-    phone: string;
   };
   attendanceRate: number;
   totalClasses: number;
@@ -166,7 +152,6 @@ const Members: React.FC = () => {
     const newMember: Member = {
       id: `M${String(members.length + 1).padStart(4, '0')}`,
       name: formData.name,
-      memberType: 'Member',
       email: formData.email,
       phone: formData.phone,
       dateOfBirth: formData.dateOfBirth,
@@ -194,15 +179,7 @@ const Members: React.FC = () => {
         lastCheckup: new Date().toISOString().split('T')[0],
         vitaminD: formData.vitaminD,
         ferritin: formData.ferritin,
-        b12: 'Normal',
-        papSmear: 'Normal',
-        memogram: 'Normal',
         remarks: formData.remarks
-      },
-      tshirtSize: 'M',
-      referredBy: {
-        name: '',
-        phone: ''
       },
       attendanceRate: 0,
       totalClasses: 0,
@@ -269,12 +246,20 @@ const Members: React.FC = () => {
     setSelectedMember(member);
     setFormData({
       name: member.name,
+      memberType: member.memberType,
       email: member.email,
       phone: member.phone,
       dateOfBirth: member.dateOfBirth,
       gender: member.gender,
       address: member.address,
       emergencyContactName: member.emergencyContact.name,
+      tshirtSize: member.tshirtSize,
+      professionalInfo: member.professionalInfo || {
+        specialization: '',
+        experience: '',
+        bio: ''
+      },
+      referredBy: member.referredBy,
       emergencyContactPhone: member.emergencyContact.phone,
       emergencyContactRelationship: member.emergencyContact.relationship,
       membershipLevel: member.membershipLevel,
