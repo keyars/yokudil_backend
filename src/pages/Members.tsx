@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { mockMembers, membershipLevels } from '../data/mockData';
-import { Search, Filter, Plus, Download, Eye, Edit, Trash2, X, Calendar, Phone, Mail, User, Heart, UserPlus, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Plus, Download, Eye, CreditCard as Edit, Trash2, X, Calendar, Phone, Mail, User, Heart, UserPlus, CheckCircle, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Member {
   id: string;
