@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { instructors } from '../data/mockData';
-import { UserCheck, Plus, Edit, Trash2, Search, Clock, Star, Users, X, Eye, Mail, Phone, MapPin, Calendar, Award, User, AlertTriangle } from 'lucide-react';
+import { UserCheck, Plus, CreditCard as Edit, Trash2, Search, Clock, Star, Users, X, Eye, Mail, Phone, MapPin, Calendar, Award, User, AlertTriangle } from 'lucide-react';
 
 interface Instructor {
   id: number;
@@ -186,6 +186,13 @@ const Teachers: React.FC = () => {
           <p className="text-gray-600 mt-1">View and manage teachers and volunteers (managed through Members section)</p>
         </div>
         <button
+          type="button"
+          onClick={handleAddInstructor}
+          className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
+        >
+          <Plus size={20} />
+          <span>Add Instructor</span>
+        </button>
       </div>
 
       {/* Statistics */}
