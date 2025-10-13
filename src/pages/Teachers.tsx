@@ -192,6 +192,7 @@ const Teachers: React.FC = () => {
         >
           <Plus size={20} />
           <span>Add Instructor</span>
+        </button>
       </div>
 
       {/* Statistics */}
