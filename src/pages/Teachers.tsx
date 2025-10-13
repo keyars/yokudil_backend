@@ -183,7 +183,7 @@ const Teachers: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Instructors</h1>
-          <p className="text-gray-600 mt-1">View and manage teachers and volunteers (managed through Members section)</p>
+          <p className="text-gray-600 mt-1">View teachers and volunteers - managed through Members section</p>
         </div>
         <button
           type="button"
