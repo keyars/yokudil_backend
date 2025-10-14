@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { mockMembers } from '../data/mockData';
-import { Users, Plus, Edit, Trash2, Search, Filter, Eye, X, Save, Mail, Phone, MapPin, Calendar, Heart, UserPlus, UserCheck, GraduationCap, FileText } from 'lucide-react';
+import { Users, Plus, CreditCard as Edit, Trash2, Search, Filter, Eye, X, Save, Mail, Phone, MapPin, Calendar, Heart, UserPlus, UserCheck, GraduationCap, FileText } from 'lucide-react';
 
 interface Member {
   id: string;
