@@ -138,6 +138,52 @@ const Members: React.FC = () => {
     });
   };
 
+  // T-shirt size calculations
+  const getTshirtSizeCounts = () => {
+    const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    const counts: {[key: string]: {count: number, members: Member[]}} = {};
+    
+    sizes.forEach(size => {
+      const membersWithSize = members.filter(member => member.tshirtSize === size);
+      counts[size] = {
+        count: membersWithSize.length,
+        members: membersWithSize
+      };
+    });
+    
+    return counts;
+  };
+
+  const exportTshirtListAsPDF = () => {
+    const sizeCounts = getTshirtSizeCounts();
+    const totalCount = Object.values(sizeCounts).reduce((sum, item) => sum + item.count, 0);
+    
+    // Create a simple text content for PDF export (in a real app, you'd use a PDF library)
+    let content = `T-SHIRT SIZE REQUIREMENTS\n\n`;
+    content += `Total T-shirts needed: ${totalCount}\n\n`;
+    content += `Size Breakdown:\n`;
+    
+    Object.entries(sizeCounts).forEach(([size, data]) => {
+      const fullSizeName = size === 'XS' ? 'Extra Small' : 
+                          size === 'S' ? 'Small' : 
+                          size === 'M' ? 'Medium' : 
+                          size === 'L' ? 'Large' : 
+                          size === 'XL' ? 'Extra Large' : 'Double XL';
+      content += `${fullSizeName} (${size}): ${data.count} pieces\n`;
+    });
+    
+    // In a real implementation, you would use a PDF library like jsPDF
+    // For now, we'll create a downloadable text file
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tshirt-requirements.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -285,6 +331,25 @@ const Members: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Members Management</h1>
           <p className="text-gray-600 mt-1">Manage all members, teachers, and volunteers</p>
         </div>
+        <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          <Users size={16} />
+          <span>Approvals</span>
+        </button>
+        <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          <UserPlus size={16} />
+          <span>Invite</span>
+        </button>
+        <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          <Download size={16} />
+          <span>Export</span>
+        </button>
+        <button 
+          onClick={() => setShowTshirtModal(true)}
+          className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+        >
+          <FileText size={16} />
+          <span>T-shirt List</span>
+        </button>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
@@ -1384,6 +1449,163 @@ const Members: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* T-shirt List Modal */}
+      {showTshirtModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">T-shirt Size Requirements</h2>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={exportTshirtListAsPDF}
+                  className="flex items-center space-x-2 px-4 py-2 bg-[#F25274] text-white rounded-lg hover:bg-[#F25274]/90"
+                >
+                  <Download size={16} />
+                  <span>Export PDF</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowTshirtModal(false);
+                    setSelectedTshirtSize(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {!selectedTshirtSize ? (
+                <div>
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Size Distribution</h3>
+                    <p className="text-gray-600">Click on any size count to view members with that size</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    {Object.entries(getTshirtSizeCounts()).map(([size, data]) => {
+                      const fullSizeName = size === 'XS' ? 'Extra Small' : 
+                                          size === 'S' ? 'Small' : 
+                                          size === 'M' ? 'Medium' : 
+                                          size === 'L' ? 'Large' : 
+                                          size === 'XL' ? 'Extra Large' : 'Double XL';
+                      
+                      return (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedTshirtSize(size)}
+                          className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-[#F25274] hover:shadow-md transition-all text-center"
+                        >
+                          <div className="text-2xl font-bold text-[#F25274] mb-2">{data.count}</div>
+                          <div className="text-sm font-medium text-gray-900">{fullSizeName}</div>
+                          <div className="text-xs text-gray-500">({size})</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold text-gray-900">Total T-shirts Required:</span>
+                      <span className="text-2xl font-bold text-[#F25274]">
+                        {Object.values(getTshirtSizeCounts()).reduce((sum, item) => sum + item.count, 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Members with Size: {selectedTshirtSize === 'XS' ? 'Extra Small' : 
+                                           selectedTshirtSize === 'S' ? 'Small' : 
+                                           selectedTshirtSize === 'M' ? 'Medium' : 
+                                           selectedTshirtSize === 'L' ? 'Large' : 
+                                           selectedTshirtSize === 'XL' ? 'Extra Large' : 'Double XL'} ({selectedTshirtSize})
+                      </h3>
+                      <p className="text-gray-600">
+                        {getTshirtSizeCounts()[selectedTshirtSize]?.count || 0} members
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedTshirtSize(null)}
+                      className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      <span>← Back to Sizes</span>
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Member
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Type
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Level
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Contact
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {getTshirtSizeCounts()[selectedTshirtSize]?.members.map((member) => (
+                          <tr key={member.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="w-10 h-10 bg-[#6CBFC4] rounded-full flex items-center justify-center">
+                                  <span className="text-white font-medium text-sm">
+                                    {member.name.split(' ').map(n => n[0]).join('')}
+                                  </span>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                                  <div className="text-sm text-gray-500">{member.id}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                member.memberType === 'Teacher' ? 'bg-blue-100 text-blue-800' :
+                                member.memberType === 'Volunteer' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {member.memberType}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                member.membershipLevel === 'Arumbu Ani' ? 'bg-pink-100 text-pink-800' :
+                                member.membershipLevel === 'Mottu Ani' ? 'bg-teal-100 text-teal-800' :
+                                member.membershipLevel === 'Mugai Ani' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-purple-100 text-purple-800'
+                              }`}>
+                                {member.membershipLevel}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900">{member.phone}</div>
+                              <div className="text-sm text-gray-500">{member.email}</div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
