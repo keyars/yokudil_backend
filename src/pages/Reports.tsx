@@ -31,9 +31,25 @@ const Reports: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'members' | 'attendance'>('members');
   const [dateRange, setDateRange] = useState('last30days');
   const [selectedLevel, setSelectedLevel] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
+  
+  // Attendance filters
+  const [selectedInstructor, setSelectedInstructor] = useState('');
+  const [selectedClassLevel, setSelectedClassLevel] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [customDateFrom, setCustomDateFrom] = useState('');
+  const [customDateTo, setCustomDateTo] = useState('');
 
   const membershipLevels = ['Arumbu Ani', 'Mottu Ani', 'Mugai Ani', 'Malar Ani'];
+  
+  // Mock instructors data
+  const instructors = [
+    { id: 'I001', name: 'Priya Sharma' },
+    { id: 'I002', name: 'Anita Krishnan' },
+    { id: 'I003', name: 'Meera Nair' },
+    { id: 'I004', name: 'Lakshmi Devi' },
+    { id: 'I005', name: 'Volunteer - Ravi Kumar' },
+    { id: 'I006', name: 'Volunteer - Sita Patel' }
+  ];
 
   // Member Analytics Data
   const memberAnalytics = useMemo(() => {
@@ -160,9 +176,56 @@ const Reports: React.FC = () => {
     ? memberAnalytics.memberAttendanceStats.filter(member => member.membershipLevel === selectedLevel)
     : memberAnalytics.memberAttendanceStats;
 
-  const filteredClassStats = selectedClass
-    ? attendanceAnalytics.classStats.filter(stat => stat.className === selectedClass)
-    : attendanceAnalytics.classStats;
+  // Filter classes for attendance reports
+  const filteredClassesForAttendance = useMemo(() => {
+    let filtered = [...mockClasses];
+    
+    // Filter by instructor
+    if (selectedInstructor) {
+      filtered = filtered.filter(cls => cls.instructor === selectedInstructor);
+    }
+    
+    // Filter by level
+    if (selectedClassLevel) {
+      filtered = filtered.filter(cls => cls.level.includes(selectedClassLevel));
+    }
+    
+    // Filter by date
+    if (dateFilter !== 'all') {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      if (dateFilter === 'today') {
+        filtered = filtered.filter(cls => cls.date === todayStr);
+      } else if (dateFilter === 'thisweek') {
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        
+        filtered = filtered.filter(cls => {
+          const classDate = new Date(cls.date);
+          return classDate >= startOfWeek && classDate <= endOfWeek;
+        });
+      } else if (dateFilter === 'thismonth') {
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        filtered = filtered.filter(cls => {
+          const classDate = new Date(cls.date);
+          return classDate >= startOfMonth && classDate <= endOfMonth;
+        });
+      } else if (dateFilter === 'custom' && customDateFrom && customDateTo) {
+        filtered = filtered.filter(cls => {
+          const classDate = new Date(cls.date);
+          return classDate >= new Date(customDateFrom) && classDate <= new Date(customDateTo);
+        });
+      }
+    }
+    
+    // Sort by date (latest first)
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [selectedInstructor, selectedClassLevel, dateFilter, customDateFrom, customDateTo]);
 
   return (
     <div className="space-y-6">
@@ -459,44 +522,114 @@ const Reports: React.FC = () => {
                 </div>
               </div>
 
-              {/* Attendance by Class Chart */}
+              {/* Filters */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Attendance by Classes</h3>
-                  <BarChart3 size={20} className="text-gray-400" />
-                </div>
-                <div className="h-80">
-                  <Bar data={attendanceByClassData} options={chartOptions} />
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Teacher/Volunteer</label>
+                    <select
+                      value={selectedInstructor}
+                      onChange={(e) => setSelectedInstructor(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    >
+                      <option value="">All Instructors</option>
+                      {instructors.map(instructor => (
+                        <option key={instructor.id} value={instructor.name}>{instructor.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
+                    <select
+                      value={selectedClassLevel}
+                      onChange={(e) => setSelectedClassLevel(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    >
+                      <option value="">All Levels</option>
+                      {membershipLevels.map(level => (
+                        <option key={level} value={level}>{level}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date Filter</label>
+                    <select
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    >
+                      <option value="all">All Time</option>
+                      <option value="today">Today</option>
+                      <option value="thisweek">This Week</option>
+                      <option value="thismonth">This Month</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                  </div>
+                  
+                  {dateFilter === 'custom' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                        <input
+                          type="date"
+                          value={customDateFrom}
+                          onChange={(e) => setCustomDateFrom(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                        <input
+                          type="date"
+                          value={customDateTo}
+                          onChange={(e) => setCustomDateTo(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        />
+                      </div>
+                    </>
+                  )}
+                  
+                  {dateFilter !== 'custom' && (
+                    <div className="flex items-end">
+                      <div className="text-sm text-gray-600">
+                        <Filter size={16} className="inline mr-1" />
+                        {filteredClassesForAttendance.length} of {mockClasses.length} classes
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Class Details Table */}
+              {/* Classes Attendance Table */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Class Attendance Details</h3>
-                  <select
-                    value={selectedClass}
-                    onChange={(e) => setSelectedClass(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                  >
-                    <option value="">All Classes</option>
-                    {attendanceAnalytics.classStats.map(stat => (
-                      <option key={stat.className} value={stat.className}>{stat.className}</option>
-                    ))}
-                  </select>
+                  <h3 className="text-lg font-semibold text-gray-900">Classes Attendance Report</h3>
+                  <div className="text-sm text-gray-600">Latest classes first</div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Class Name
+                          Class Details
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Instructor
+                          Date & Time
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Total Attendance
+                          Teacher/Volunteer
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Duration
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Enrolled
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Attendance
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Attendance Rate
@@ -510,42 +643,91 @@ const Reports: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredClassStats.map((stat) => (
-                        <tr key={stat.className} className="hover:bg-gray-50">
+                      {filteredClassesForAttendance.map((classItem) => {
+                        const classAttendance = mockAttendance.filter(record => record.classId === classItem.id);
+                        const totalAttendance = classAttendance.length;
+                        const attendanceRate = classItem.enrolled > 0 ? Math.round((totalAttendance / classItem.enrolled) * 100) : 0;
+                        const avgRating = totalAttendance > 0 ? 
+                          (classAttendance.reduce((sum, record) => sum + record.rating, 0) / totalAttendance).toFixed(1) : 'N/A';
+                        const avgDuration = totalAttendance > 0 ? 
+                          Math.round(classAttendance.reduce((sum, record) => sum + record.duration, 0) / totalAttendance) : 0;
+                        
+                        return (
+                        <tr key={classItem.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{stat.className}</div>
+                            <div className="text-sm font-medium text-gray-900">{classItem.title}</div>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {classItem.level.map((level, index) => (
+                                <span
+                                  key={index}
+                                  className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                    level === 'Arumbu Ani' ? 'bg-pink-100 text-pink-800' :
+                                    level === 'Mottu Ani' ? 'bg-teal-100 text-teal-800' :
+                                    level === 'Mugai Ani' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-purple-100 text-purple-800'
+                                  }`}
+                                >
+                                  {level}
+                                </span>
+                              ))}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{stat.instructor}</div>
+                            <div className="text-sm text-gray-900">{classItem.date}</div>
+                            <div className="text-sm text-gray-500">{classItem.time}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{stat.totalAttendance}</div>
+                            <div className="text-sm text-gray-900">{classItem.instructor}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{classItem.duration} min</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{classItem.enrolled}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{totalAttendance}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                                 <div 
                                   className="bg-[#F25274] h-2 rounded-full" 
-                                  style={{ width: `${Math.min(stat.attendanceRate, 100)}%` }}
+                                  style={{ width: `${Math.min(attendanceRate, 100)}%` }}
                                 ></div>
                               </div>
-                              <span className="text-sm text-gray-600">{stat.attendanceRate}%</span>
+                              <span className="text-sm text-gray-600">{attendanceRate}%</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <Star size={16} className="text-yellow-400 mr-1" />
-                              <span className="text-sm text-gray-900">{stat.avgRating}</span>
-                            </div>
+                            {avgRating !== 'N/A' ? (
+                              <div className="flex items-center">
+                                <Star size={16} className="text-yellow-400 mr-1" />
+                                <span className="text-sm text-gray-900">{avgRating}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-500">N/A</span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {stat.avgDuration} min
+                            {avgDuration > 0 ? `${avgDuration} min` : 'N/A'}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
+                
+                {filteredClassesForAttendance.length === 0 && (
+                  <div className="text-center py-12">
+                    <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes Found</h3>
+                    <p className="text-gray-600">
+                      No classes match your current filters. Try adjusting your filter criteria.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
