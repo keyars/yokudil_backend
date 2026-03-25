@@ -732,126 +732,44 @@ const Reports: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('title')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Class Details</span>
-                          {attendanceSortField === 'title' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('date')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Date & Time</span>
-                          {attendanceSortField === 'date' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('instructor')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Teacher/Volunteer</span>
-                          {attendanceSortField === 'instructor' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('duration')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Duration</span>
-                          {attendanceSortField === 'duration' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('enrolled')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Enrolled</span>
-                          {attendanceSortField === 'enrolled' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('totalAttendance')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Attendance</span>
-                          {attendanceSortField === 'totalAttendance' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('attendanceRate')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Attendance Rate</span>
-                          {attendanceSortField === 'attendanceRate' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('avgRating')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Avg Rating</span>
-                          {attendanceSortField === 'avgRating' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleAttendanceSort('avgDuration')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Avg Duration</span>
-                          {attendanceSortField === 'avgDuration' && (
-                            <span className="text-[#F25274]">
-                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
-                            </span>
-                          )}
-                        </div>
+                    <select
+                      value={selectedClassLevel}
+                      onChange={(e) => setSelectedClassLevel(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    >
+                      <option value="">All Levels</option>
+                      {membershipLevels.map(level => (
+                        <option key={level} value={level}>{level}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date Filter</label>
+                    <select
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                    >
+                      <option value="all">All Dates</option>
+                      <option value="today">Today</option>
+                      <option value="thisweek">This Week</option>
+                      <option value="thismonth">This Month</option>
+                      <option value="custom">Custom Range</option>
+                    </select>
+                  </div>
                   
                   {dateFilter === 'custom' && (
                     <>
                       <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                        <input
+                          type="date"
+                          value={customDateFrom}
+                          onChange={(e) => setCustomDateFrom(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
+                        />
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">To Date</label>
                         <input
@@ -885,46 +803,127 @@ const Reports: React.FC = () => {
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Class Details
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('title')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Class Details</span>
+                            {attendanceSortField === 'title' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date & Time
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('date')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Date & Time</span>
+                            {attendanceSortField === 'date' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Teacher/Volunteer
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('instructor')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Teacher/Volunteer</span>
+                            {attendanceSortField === 'instructor' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Duration
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('duration')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Duration</span>
+                            {attendanceSortField === 'duration' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Enrolled
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('enrolled')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Enrolled</span>
+                            {attendanceSortField === 'enrolled' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Attendance
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('totalAttendance')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Attendance</span>
+                            {attendanceSortField === 'totalAttendance' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Attendance Rate
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('attendanceRate')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Attendance Rate</span>
+                            {attendanceSortField === 'attendanceRate' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Avg Rating
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('avgRating')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Avg Rating</span>
+                            {attendanceSortField === 'avgRating' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Avg Duration
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleAttendanceSort('avgDuration')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Avg Duration</span>
+                            {attendanceSortField === 'avgDuration' && (
+                              <span className="text-[#F25274]">
+                                {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                    {sortedClassesWithStats.map((classItem) => (
-                      <tr key={classItem.id} className="hover:bg-gray-50">
+                      </tr>
+                    </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredClassesForAttendance.map((classItem) => {
-                        const classAttendance = mockAttendance.filter(record => record.classId === classItem.id);
-                        const totalAttendance = classAttendance.length;
-                        const attendanceRate = classItem.enrolled > 0 ? Math.round((totalAttendance / classItem.enrolled) * 100) : 0;
-                        const avgRating = totalAttendance > 0 ? 
-                          (classAttendance.reduce((sum, record) => sum + record.rating, 0) / totalAttendance).toFixed(1) : 'N/A';
-                        const avgDuration = totalAttendance > 0 ? 
-                          Math.round(classAttendance.reduce((sum, record) => sum + record.duration, 0) / totalAttendance) : 0;
-                        
-                        return (
+                      {sortedClassesWithStats.map((classItem) => (
                         <tr key={classItem.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{classItem.title}</div>
@@ -946,57 +945,56 @@ const Reports: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.date}</div>
-                          <div className="text-sm text-gray-900">{classItem.totalAttendance}</div>
+                            <div className="text-sm text-gray-500">{classItem.time}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.instructor}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.duration} min</div>
-                                style={{ width: `${Math.min(classItem.attendanceRate, 100)}%` }}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.enrolled}</div>
-                            <span className="text-sm text-gray-600">{classItem.attendanceRate}%</span>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{totalAttendance}</div>
                           </td>
-                          {classItem.avgRating !== '0.0' ? (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{classItem.totalAttendance}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                                 <div 
                                   className="bg-[#F25274] h-2 rounded-full" 
-                                  style={{ width: `${Math.min(attendanceRate, 100)}%` }}
+                                  style={{ width: `${Math.min(classItem.attendanceRate, 100)}%` }}
                                 ></div>
                               </div>
-                              <span className="text-sm text-gray-900">{classItem.avgRating}</span>
+                              <span className="text-sm text-gray-600">{classItem.attendanceRate}%</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            {avgRating !== 'N/A' ? (
+                            {classItem.avgRating !== '0.0' ? (
                               <div className="flex items-center">
                                 <Star size={16} className="text-yellow-400 mr-1" />
-                                <span className="text-sm text-gray-900">{avgRating}</span>
+                                <span className="text-sm text-gray-900">{classItem.avgRating}</span>
                               </div>
                             ) : (
                               <span className="text-sm text-gray-500">N/A</span>
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {avgDuration > 0 ? `${avgDuration} min` : 'N/A'}
+                            {classItem.avgDuration > 0 ? `${classItem.avgDuration} min` : 'N/A'}
                           </td>
                         </tr>
-                        );
-                      })}
+                      ))}
                     </tbody>
                   </table>
                 </div>
                 
-              {sortedClassesWithStats.length === 0 && (
+                {sortedClassesWithStats.length === 0 && (
                   <div className="text-center py-12">
-                          {classItem.avgDuration > 0 ? `${classItem.avgDuration} min` : 'N/A'}
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes Found</h3>
                     <p className="text-gray-600">
-                    ))}
+                      Try adjusting your filters to see more results.
+                    </p>
                   </div>
                 )}
               </div>
