@@ -31,6 +31,8 @@ const Reports: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'members' | 'attendance'>('members');
   const [dateRange, setDateRange] = useState('last30days');
   const [selectedLevel, setSelectedLevel] = useState('');
+  const [memberSortField, setMemberSortField] = useState('name');
+  const [memberSortDirection, setMemberSortDirection] = useState<'asc' | 'desc'>('asc');
   
   // Attendance filters
   const [selectedInstructor, setSelectedInstructor] = useState('');
@@ -38,6 +40,8 @@ const Reports: React.FC = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
+  const [attendanceSortField, setAttendanceSortField] = useState('date');
+  const [attendanceSortDirection, setAttendanceSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const membershipLevels = ['Arumbu Ani', 'Mottu Ani', 'Mugai Ani', 'Malar Ani'];
   
@@ -66,6 +70,8 @@ const Reports: React.FC = () => {
     const memberAttendanceStats = mockMembers.map(member => {
       const memberAttendance = mockAttendance.filter(record => record.memberId === member.id);
       const totalClasses = memberAttendance.length;
+      const totalAvailableClasses = mockClasses.length; // Total classes available
+      const attendancePercentage = totalAvailableClasses > 0 ? (totalClasses / totalAvailableClasses) * 100 : 0;
       const avgRating = totalClasses > 0 ? 
         memberAttendance.reduce((sum, record) => sum + record.rating, 0) / totalClasses : 0;
       const totalDuration = memberAttendance.reduce((sum, record) => sum + record.duration, 0);
@@ -73,6 +79,8 @@ const Reports: React.FC = () => {
       return {
         ...member,
         totalClasses,
+        totalAvailableClasses,
+        attendancePercentage: attendancePercentage.toFixed(2),
         avgRating: avgRating.toFixed(1),
         totalDuration,
         lastAttendance: memberAttendance.length > 0 ? 
@@ -87,6 +95,82 @@ const Reports: React.FC = () => {
       activeMembers: mockMembers.filter(m => m.status === 'Active').length
     };
   }, []);
+
+  // Helper function to sort members
+  const sortMembers = (members: any[]) => {
+    return [...members].sort((a, b) => {
+      let aValue = a[memberSortField];
+      let bValue = b[memberSortField];
+      
+      // Handle numeric fields
+      if (['totalClasses', 'avgRating', 'totalDuration', 'attendancePercentage'].includes(memberSortField)) {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      }
+      
+      // Handle string fields
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+      
+      if (memberSortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
+
+  // Helper function to sort attendance records
+  const sortAttendanceRecords = (records: any[]) => {
+    return [...records].sort((a, b) => {
+      let aValue = a[attendanceSortField];
+      let bValue = b[attendanceSortField];
+      
+      // Handle numeric fields
+      if (['totalAttendance', 'avgRating', 'avgDuration', 'attendanceRate', 'duration', 'enrolled'].includes(attendanceSortField)) {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      }
+      
+      // Handle date fields
+      if (attendanceSortField === 'date') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      }
+      
+      // Handle string fields
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+      
+      if (attendanceSortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  };
+
+  const handleMemberSort = (field: string) => {
+    if (memberSortField === field) {
+      setMemberSortDirection(memberSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setMemberSortField(field);
+      setMemberSortDirection('asc');
+    }
+  };
+
+  const handleAttendanceSort = (field: string) => {
+    if (attendanceSortField === field) {
+      setAttendanceSortDirection(attendanceSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setAttendanceSortField(field);
+      setAttendanceSortDirection('asc');
+    }
+  };
 
   // Attendance Analytics Data
   const attendanceAnalytics = useMemo(() => {
@@ -175,6 +259,8 @@ const Reports: React.FC = () => {
   const filteredMembers = selectedLevel 
     ? memberAnalytics.memberAttendanceStats.filter(member => member.membershipLevel === selectedLevel)
     : memberAnalytics.memberAttendanceStats;
+  
+  const sortedMembers = sortMembers(filteredMembers);
 
   // Filter classes for attendance reports
   const filteredClassesForAttendance = useMemo(() => {
@@ -226,6 +312,27 @@ const Reports: React.FC = () => {
     // Sort by date (latest first)
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [selectedInstructor, selectedClassLevel, dateFilter, customDateFrom, customDateTo]);
+
+  // Calculate attendance stats for filtered classes and sort them
+  const classesWithAttendanceStats = filteredClassesForAttendance.map(classItem => {
+    const classAttendance = mockAttendance.filter(record => record.classId === classItem.id);
+    const totalAttendance = classAttendance.length;
+    const attendanceRate = classItem.enrolled > 0 ? Math.round((totalAttendance / classItem.enrolled) * 100) : 0;
+    const avgRating = totalAttendance > 0 ? 
+      (classAttendance.reduce((sum, record) => sum + record.rating, 0) / totalAttendance) : 0;
+    const avgDuration = totalAttendance > 0 ? 
+      Math.round(classAttendance.reduce((sum, record) => sum + record.duration, 0) / totalAttendance) : 0;
+    
+    return {
+      ...classItem,
+      totalAttendance,
+      attendanceRate,
+      avgRating: avgRating.toFixed(1),
+      avgDuration
+    };
+  });
+  
+  const sortedClassesWithStats = sortAttendanceRecords(classesWithAttendanceStats);
 
   return (
     <div className="space-y-6">
@@ -394,28 +501,101 @@ const Reports: React.FC = () => {
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Member
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleMemberSort('name')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Member</span>
+                            {memberSortField === 'name' && (
+                              <span className="text-[#F25274]">
+                                {memberSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Level
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleMemberSort('membershipLevel')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Level</span>
+                            {memberSortField === 'membershipLevel' && (
+                              <span className="text-[#F25274]">
+                                {memberSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Total Classes
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleMemberSort('attendancePercentage')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Attendance %</span>
+                            {memberSortField === 'attendancePercentage' && (
+                              <span className="text-[#F25274]">
+                                {memberSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Avg Rating
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleMemberSort('totalClasses')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Total Classes</span>
+                            {memberSortField === 'totalClasses' && (
+                              <span className="text-[#F25274]">
+                                {memberSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Total Duration
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleMemberSort('avgRating')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Avg Rating</span>
+                            {memberSortField === 'avgRating' && (
+                              <span className="text-[#F25274]">
+                                {memberSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Last Attendance
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleMemberSort('totalDuration')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Total Duration</span>
+                            {memberSortField === 'totalDuration' && (
+                              <span className="text-[#F25274]">
+                                {memberSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleMemberSort('lastAttendance')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Last Attendance</span>
+                            {memberSortField === 'lastAttendance' && (
+                              <span className="text-[#F25274]">
+                                {memberSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredMembers.map((member) => (
+                      {sortedMembers.map((member) => (
                         <tr key={member.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -439,6 +619,17 @@ const Reports: React.FC = () => {
                             }`}>
                               {member.membershipLevel}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {member.totalClasses}/{member.totalAvailableClasses} ({member.attendancePercentage}%)
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                              <div 
+                                className="bg-[#F25274] h-2 rounded-full" 
+                                style={{ width: `${Math.min(parseFloat(member.attendancePercentage), 100)}%` }}
+                              ></div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {member.totalClasses}
@@ -541,45 +732,126 @@ const Reports: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Level</label>
-                    <select
-                      value={selectedClassLevel}
-                      onChange={(e) => setSelectedClassLevel(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    >
-                      <option value="">All Levels</option>
-                      {membershipLevels.map(level => (
-                        <option key={level} value={level}>{level}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date Filter</label>
-                    <select
-                      value={dateFilter}
-                      onChange={(e) => setDateFilter(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                    >
-                      <option value="all">All Time</option>
-                      <option value="today">Today</option>
-                      <option value="thisweek">This Week</option>
-                      <option value="thismonth">This Month</option>
-                      <option value="custom">Custom Range</option>
-                    </select>
-                  </div>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('title')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Class Details</span>
+                          {attendanceSortField === 'title' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('date')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Date & Time</span>
+                          {attendanceSortField === 'date' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('instructor')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Teacher/Volunteer</span>
+                          {attendanceSortField === 'instructor' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('duration')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Duration</span>
+                          {attendanceSortField === 'duration' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('enrolled')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Enrolled</span>
+                          {attendanceSortField === 'enrolled' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('totalAttendance')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Attendance</span>
+                          {attendanceSortField === 'totalAttendance' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('attendanceRate')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Attendance Rate</span>
+                          {attendanceSortField === 'attendanceRate' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('avgRating')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Avg Rating</span>
+                          {attendanceSortField === 'avgRating' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                      <th 
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        onClick={() => handleAttendanceSort('avgDuration')}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>Avg Duration</span>
+                          {attendanceSortField === 'avgDuration' && (
+                            <span className="text-[#F25274]">
+                              {attendanceSortDirection === 'asc' ? '↑' : '↓'}
+                            </span>
+                          )}
+                        </div>
                   
                   {dateFilter === 'custom' && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">From Date</label>
-                        <input
-                          type="date"
-                          value={customDateFrom}
-                          onChange={(e) => setCustomDateFrom(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F25274] focus:border-transparent"
-                        />
-                      </div>
-                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">To Date</label>
                         <input
@@ -640,8 +912,8 @@ const Reports: React.FC = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Avg Duration
                         </th>
-                      </tr>
-                    </thead>
+                    {sortedClassesWithStats.map((classItem) => (
+                      <tr key={classItem.id} className="hover:bg-gray-50">
                     <tbody className="bg-white divide-y divide-gray-200">
                       {filteredClassesForAttendance.map((classItem) => {
                         const classAttendance = mockAttendance.filter(record => record.classId === classItem.id);
@@ -674,21 +946,21 @@ const Reports: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.date}</div>
-                            <div className="text-sm text-gray-500">{classItem.time}</div>
+                          <div className="text-sm text-gray-900">{classItem.totalAttendance}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.instructor}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.duration} min</div>
-                          </td>
+                                style={{ width: `${Math.min(classItem.attendanceRate, 100)}%` }}
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{classItem.enrolled}</div>
-                          </td>
+                            <span className="text-sm text-gray-600">{classItem.attendanceRate}%</span>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{totalAttendance}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          {classItem.avgRating !== '0.0' ? (
                             <div className="flex items-center">
                               <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                                 <div 
@@ -696,7 +968,7 @@ const Reports: React.FC = () => {
                                   style={{ width: `${Math.min(attendanceRate, 100)}%` }}
                                 ></div>
                               </div>
-                              <span className="text-sm text-gray-600">{attendanceRate}%</span>
+                              <span className="text-sm text-gray-900">{classItem.avgRating}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -719,13 +991,12 @@ const Reports: React.FC = () => {
                   </table>
                 </div>
                 
-                {filteredClassesForAttendance.length === 0 && (
+              {sortedClassesWithStats.length === 0 && (
                   <div className="text-center py-12">
-                    <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
+                          {classItem.avgDuration > 0 ? `${classItem.avgDuration} min` : 'N/A'}
                     <h3 className="text-lg font-medium text-gray-900 mb-2">No Classes Found</h3>
                     <p className="text-gray-600">
-                      No classes match your current filters. Try adjusting your filter criteria.
-                    </p>
+                    ))}
                   </div>
                 )}
               </div>
