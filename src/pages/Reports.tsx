@@ -28,7 +28,7 @@ ChartJS.register(
 );
 
 const Reports: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'members' | 'attendance'>('members');
+  const [activeTab, setActiveTab] = useState<'members' | 'attendance' | 'teachers'>('members');
   const [dateRange, setDateRange] = useState('last30days');
   const [selectedLevel, setSelectedLevel] = useState('');
   const [memberSortField, setMemberSortField] = useState('name');
@@ -42,6 +42,10 @@ const Reports: React.FC = () => {
   const [customDateTo, setCustomDateTo] = useState('');
   const [attendanceSortField, setAttendanceSortField] = useState('date');
   const [attendanceSortDirection, setAttendanceSortDirection] = useState<'asc' | 'desc'>('desc');
+  
+  // Teachers/Volunteers filters and sorting
+  const [teacherSortField, setTeacherSortField] = useState('name');
+  const [teacherSortDirection, setTeacherSortDirection] = useState<'asc' | 'desc'>('asc');
 
   const membershipLevels = ['Arumbu Ani', 'Mottu Ani', 'Mugai Ani', 'Malar Ani'];
   
@@ -170,6 +174,41 @@ const Reports: React.FC = () => {
       setAttendanceSortField(field);
       setAttendanceSortDirection('asc');
     }
+  };
+
+  const handleTeacherSort = (field: string) => {
+    if (teacherSortField === field) {
+      setTeacherSortDirection(teacherSortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setTeacherSortField(field);
+      setTeacherSortDirection('asc');
+    }
+  };
+
+  // Helper function to sort teachers
+  const sortTeachers = (teachers: any[]) => {
+    return [...teachers].sort((a, b) => {
+      let aValue = a[teacherSortField];
+      let bValue = b[teacherSortField];
+      
+      // Handle numeric fields
+      if (['totalClasses', 'avgRating', 'totalEnrolled', 'totalAttendance', 'attendanceRate', 'avgDuration'].includes(teacherSortField)) {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      }
+      
+      // Handle string fields
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+      
+      if (teacherSortDirection === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
   };
 
   // Attendance Analytics Data
@@ -334,6 +373,45 @@ const Reports: React.FC = () => {
   
   const sortedClassesWithStats = sortAttendanceRecords(classesWithAttendanceStats);
 
+  // Teachers/Volunteers Analytics Data
+  const teachersAnalytics = useMemo(() => {
+    // Calculate stats for each instructor
+    const teacherStats = instructors.map(instructor => {
+      const instructorClasses = mockClasses.filter(cls => cls.instructor === instructor.name);
+      const totalClasses = instructorClasses.length;
+      const totalEnrolled = instructorClasses.reduce((sum, cls) => sum + cls.enrolled, 0);
+      
+      // Get attendance for this instructor's classes
+      const instructorAttendance = mockAttendance.filter(record => 
+        instructorClasses.some(cls => cls.id === record.classId)
+      );
+      
+      const totalAttendance = instructorAttendance.length;
+      const attendanceRate = totalEnrolled > 0 ? Math.round((totalAttendance / totalEnrolled) * 100) : 0;
+      const avgRating = totalAttendance > 0 ? 
+        (instructorAttendance.reduce((sum, record) => sum + record.rating, 0) / totalAttendance) : 0;
+      const avgDuration = totalAttendance > 0 ? 
+        Math.round(instructorAttendance.reduce((sum, record) => sum + record.duration, 0) / totalAttendance) : 0;
+      
+      return {
+        ...instructor,
+        totalClasses,
+        totalEnrolled,
+        totalAttendance,
+        attendanceRate,
+        avgRating: avgRating.toFixed(1),
+        avgDuration
+      };
+    });
+
+    return {
+      teacherStats,
+      totalInstructors: instructors.length
+    };
+  }, []);
+
+  const sortedTeachers = sortTeachers(teachersAnalytics.teacherStats);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -383,6 +461,19 @@ const Reports: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <CheckSquare size={16} />
                 <span>Attendance Reports</span>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('teachers')}
+              className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                activeTab === 'teachers'
+                  ? 'border-[#F25274] text-[#F25274]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <User size={16} />
+                <span>Teachers/Volunteers</span>
               </div>
             </button>
           </nav>
@@ -995,6 +1086,232 @@ const Reports: React.FC = () => {
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Teachers/Volunteers Reports Tab */}
+          {activeTab === 'teachers' && (
+            <div className="space-y-6">
+              {/* Teachers Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="bg-gradient-to-br from-[#F25274]/10 to-[#F25274]/5 rounded-lg p-6 border border-[#F25274]/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Instructors</p>
+                      <p className="text-3xl font-bold text-gray-900 mt-2">{teachersAnalytics.totalInstructors}</p>
+                    </div>
+                    <div className="bg-[#F25274] p-3 rounded-full">
+                      <User size={24} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-[#6CBFC4]/10 to-[#6CBFC4]/5 rounded-lg p-6 border border-[#6CBFC4]/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Classes</p>
+                      <p className="text-3xl font-bold text-gray-900 mt-2">
+                        {teachersAnalytics.teacherStats.reduce((sum, teacher) => sum + teacher.totalClasses, 0)}
+                      </p>
+                    </div>
+                    <div className="bg-[#6CBFC4] p-3 rounded-full">
+                      <Calendar size={24} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-blue-100 to-blue-50 rounded-lg p-6 border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Total Enrolled</p>
+                      <p className="text-3xl font-bold text-gray-900 mt-2">
+                        {teachersAnalytics.teacherStats.reduce((sum, teacher) => sum + teacher.totalEnrolled, 0)}
+                      </p>
+                    </div>
+                    <div className="bg-blue-500 p-3 rounded-full">
+                      <Users size={24} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gradient-to-br from-yellow-100 to-yellow-50 rounded-lg p-6 border border-yellow-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Avg Rating</p>
+                      <p className="text-3xl font-bold text-gray-900 mt-2">
+                        {teachersAnalytics.teacherStats.length > 0 ? 
+                          (teachersAnalytics.teacherStats.reduce((sum, teacher) => sum + parseFloat(teacher.avgRating), 0) / teachersAnalytics.teacherStats.length).toFixed(1) : 
+                          '0.0'
+                        }
+                      </p>
+                    </div>
+                    <div className="bg-yellow-500 p-3 rounded-full">
+                      <Star size={24} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Teachers Details Table */}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Teachers/Volunteers Performance</h3>
+                  <div className="text-sm text-gray-600">
+                    {teachersAnalytics.teacherStats.length} instructors
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleTeacherSort('name')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Teacher/Volunteer</span>
+                            {teacherSortField === 'name' && (
+                              <span className="text-[#F25274]">
+                                {teacherSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleTeacherSort('totalClasses')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Total Classes</span>
+                            {teacherSortField === 'totalClasses' && (
+                              <span className="text-[#F25274]">
+                                {teacherSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleTeacherSort('totalEnrolled')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Total Enrolled</span>
+                            {teacherSortField === 'totalEnrolled' && (
+                              <span className="text-[#F25274]">
+                                {teacherSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleTeacherSort('totalAttendance')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Total Attendance</span>
+                            {teacherSortField === 'totalAttendance' && (
+                              <span className="text-[#F25274]">
+                                {teacherSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleTeacherSort('attendanceRate')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Attendance Rate</span>
+                            {teacherSortField === 'attendanceRate' && (
+                              <span className="text-[#F25274]">
+                                {teacherSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleTeacherSort('avgRating')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Avg Rating</span>
+                            {teacherSortField === 'avgRating' && (
+                              <span className="text-[#F25274]">
+                                {teacherSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                        <th 
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleTeacherSort('avgDuration')}
+                        >
+                          <div className="flex items-center space-x-1">
+                            <span>Avg Duration</span>
+                            {teacherSortField === 'avgDuration' && (
+                              <span className="text-[#F25274]">
+                                {teacherSortDirection === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {sortedTeachers.map((teacher) => (
+                        <tr key={teacher.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-[#6CBFC4] rounded-full flex items-center justify-center">
+                                <span className="text-white font-medium text-sm">
+                                  {teacher.name.split(' ').map((n: string) => n[0]).join('')}
+                                </span>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{teacher.name}</div>
+                                <div className="text-sm text-gray-500">{teacher.id}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {teacher.totalClasses}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {teacher.totalEnrolled}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {teacher.totalAttendance}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                <div 
+                                  className="bg-[#F25274] h-2 rounded-full" 
+                                  style={{ width: `${Math.min(teacher.attendanceRate, 100)}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-600">{teacher.attendanceRate}%</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {teacher.avgRating !== '0.0' ? (
+                              <div className="flex items-center">
+                                <Star size={16} className="text-yellow-400 mr-1" />
+                                <span className="text-sm text-gray-900">{teacher.avgRating}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-500">N/A</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {teacher.avgDuration > 0 ? `${teacher.avgDuration} min` : 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
